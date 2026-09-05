@@ -2,9 +2,8 @@ import type { MiddlewareHandler } from "hono";
 import { verify } from "hono/jwt";
 import type { Env } from "../env.js";
 
-// Single-user: Bearer JWT com sub == SINGLE_USER_ID.
-// Mint inicial: POST /api/v1/auth/dev-token com { setupSecret: JWT_SECRET } (rodar uma vez, depois desabilitar).
-// Alternativa futura: validar JWT do Cloudflare Access no hostname.
+// MIDDLEWARE — single-user: Bearer JWT com sub == SINGLE_USER_ID.
+// Mint inicial: POST /api/v1/auth/dev-token (setupSecret == JWT_SECRET).
 export const singleUserAuth: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
   if (c.req.path.endsWith("/auth/dev-token") || c.req.path.endsWith("/health")) return next();
   const hdr = c.req.header("Authorization") ?? "";

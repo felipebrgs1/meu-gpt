@@ -1,7 +1,7 @@
 import type { Env } from "../env.js";
 
-// Chat streaming via OpenRouter (OpenAI-compat /chat/completions com stream:true).
-// Retorna Response SSE-ready; caller formata eventos token/done.
+// SERVICE — cliente do OpenRouter (única dependência externa de LLM/embed/rerank)
+
 export async function openRouterChatStream(opts: {
   env: Env;
   model: string;
@@ -22,6 +22,7 @@ export async function openRouterChatStream(opts: {
   return res;
 }
 
+// Resolve o slot (fast/cheap/quality) para o model id configurado no env.
 export function resolveSlotModel(env: Env, slot: "fast" | "cheap" | "quality"): string {
   if (slot === "fast") return env.CHAT_MODEL_FAST;
   if (slot === "quality") return env.CHAT_MODEL_QUALITY;
