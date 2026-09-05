@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5173",
+    "predev": "node ../../scripts/sync-branding.mjs",
+    "prebuild": "node ../../scripts/sync-branding.mjs",
     "build": "tsc --noEmit -p tsconfig.json && vite build",
     "lint": "prettier --check src",
     "typecheck": "tsc --noEmit -p tsconfig.json",

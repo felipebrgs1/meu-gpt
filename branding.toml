@@ -1,0 +1,29 @@
+# ============================================================
+# BRANDING — identidade do app (white-label via TOML).
+# Edite este arquivo e rode:  node scripts/sync-branding.mjs
+# (o dev/build da web rodam o sync sozinhos)
+# Arquivos gerados (*.gen.*) são commitados, como o routeTree.gen.ts.
+# ============================================================
+
+[app]
+name = "meu-gpt"
+tagline = "Seu ChatGPT próprio, com RAG nos seus documentos."
+# url-safe (minúsculas, números, hífens): vira PWA short_name/slug + Expo slug/scheme.
+slug = "meu-gpt"
+
+[theme]
+# Cor primária: botões, destaques, ring de foco, splash do login.
+accent = "#ea580c"
+# Cor de fundo: <meta theme-color>, splash screen, fundo do PWA.
+background = "#09090b"
+
+[icons]
+# Caminhos relativos à RAIZ do monorepo. Tudo opcional:
+# campo ausente ou arquivo inexistente = mantém o padrão atual.
+# Troque pelos seus arquivos (ex.: branding/meu-icone.svg) e rode o sync.
+svg = "apps/web/public/favicon.svg"          # favicon.svg da web
+png_180 = "apps/web/public/apple-touch-icon.png"  # apple-touch-icon
+png_192 = "apps/web/public/icon-192.png"     # PWA
+png_512 = "apps/web/public/icon-512.png"     # PWA
+favicon_ico = "apps/web/public/favicon.ico"  # fallback legacy
+app_icon = "apps/mobile/assets/icon.png"     # PNG 1024 do Expo (mobile)

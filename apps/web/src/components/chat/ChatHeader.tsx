@@ -1,5 +1,6 @@
 import { CaretDown, Check, Database, Globe, Link } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
+import { BRANDING } from "../../branding.gen.js";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -37,7 +38,7 @@ export function ChatHeader({ slot, onSlot, docs, sourceIds, onSourceIds, busy, s
       <div className="flex min-w-0 items-center gap-1.5">
         <SidebarTrigger className="size-8 text-muted-foreground hover:text-foreground" title="Alternar barra lateral" />
         <span className="hidden min-[420px]:inline text-sm font-semibold tracking-tight text-foreground/90 select-none">
-          meu-gpt
+          {BRANDING.name}
         </span>
         <ToggleGroup
           value={[slot]}

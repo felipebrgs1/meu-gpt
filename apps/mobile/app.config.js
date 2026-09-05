@@ -35,30 +35,56 @@ if (apiUrl && !process.env.EXPO_PUBLIC_API_URL) {
   process.env.EXPO_PUBLIC_API_URL = apiUrl;
 }
 
-module.exports = {
-  expo: {
+// Branding via TOML: branding.gen.json é gerado por scripts/sync-branding.mjs
+// a partir de branding.toml. Ausente/ilegível (CI limpo) = cai nos padrões.
+function rootBranding() {
+  const fallback = {
     name: "meu-gpt",
     slug: "meu-gpt",
+    background: "#09090b",
+    mobile: { icon: "./assets/icon.png" },
+  };
+  try {
+    const genPath = resolve(__dirname, "..", "..", "branding.gen.json");
+    if (!existsSync(genPath)) return fallback;
+    const gen = JSON.parse(readFileSync(genPath, "utf8"));
+    return {
+      name: gen.name || fallback.name,
+      slug: gen.slug || fallback.slug,
+      background: gen.background || fallback.background,
+      mobile: { icon: (gen.mobile && gen.mobile.icon) || fallback.mobile.icon },
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+const branding = rootBranding();
+
+module.exports = {
+  expo: {
+    name: branding.name,
+    slug: branding.slug,
     version: "0.1.0",
-    scheme: "meu-gpt",
+    scheme: branding.slug,
     orientation: "portrait",
     userInterfaceStyle: "dark",
     newArchEnabled: true,
-    icon: "./assets/icon.png",
+    icon: branding.mobile.icon,
     splash: {
       image: "./assets/splash.png",
       resizeMode: "contain",
-      backgroundColor: "#09090b",
+      backgroundColor: branding.background,
     },
     assetBundlePatterns: ["**/*"],
     ios: {
       supportsTablet: true,
-      icon: "./assets/icon.png",
+      icon: branding.mobile.icon,
     },
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#09090b",
+        backgroundColor: branding.background,
       },
     },
     web: {

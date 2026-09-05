@@ -33,6 +33,10 @@ pnpm cleanup                          # apaga conversas [E2E-TEST]/[TEST] órfã
 7. **Teste sem rastro:** agente que testa o chat USA `ephemeral:true` (não persiste nada)
    ou apaga no `finally` (`DELETE /api/v1/conversations/:id`). Roteiro pronto: `pnpm test:e2e`
    (testa ephemeral + persist→delete e verifica que nada sobrou). Rastro órfão: `pnpm cleanup`.
+8. **Branding via TOML, nunca hardcoded:** nome/ícones/cores vivem em `branding.toml`.
+   Componentes usam `BRANDING` de `apps/web/src/branding.gen.ts` (gerado por
+   `node scripts/sync-branding.mjs` — o dev/build da web roda sozinho). Nunca
+   escrever o nome do app direto no JSX; `*.gen.*` são commitados.
 
 ## Arquitetura (onde mexer o quê)
 

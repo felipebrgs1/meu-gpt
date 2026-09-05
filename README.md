@@ -105,6 +105,7 @@ pnpm cleanup                  # apaga conversas [E2E-TEST]/[TEST] órfãs
 
 ## Referências
 
+- `docs/BRANDING.md` — identidade (nome, ícone, tema) via `branding.toml`
 - `docs/DEPLOY.md` — deploy self-hosted
 - `docs/SPEC-v0.2.md` — roadmap por fases
 - `AGENTS.md` — regras para agentes

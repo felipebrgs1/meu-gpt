@@ -29,6 +29,8 @@ export interface UIMessage {
   cachedTokens?: number | null;
 }
 
+// Chave de storage propositalmente ESTÁVEL (não segue o branding.toml):
+// renomear o app não deve deslogar ninguém.
 export function getToken(): string {
   return localStorage.getItem("meu-gpt-token") ?? "";
 }

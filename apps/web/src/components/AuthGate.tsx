@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { login } from "../lib/api";
+import { BRANDING } from "../branding.gen.js";
 
 // Gate single-user: usuário + senha (hardcoded na API) trocados por token de sessão.
 export function AuthGate({ onAuth }: { onAuth: () => void }) {
-  const [user, setUser] = useState("felipeb");
+  const [user, setUser] = useState("user"); // default = LOGIN_USER da API
   const [pass, setPass] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
@@ -34,7 +35,7 @@ export function AuthGate({ onAuth }: { onAuth: () => void }) {
             <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
               <OracleIcon className="size-5" />
             </div>
-            <CardTitle className="text-xl">meu-gpt</CardTitle>
+            <CardTitle className="text-xl">{BRANDING.name}</CardTitle>
           </div>
           <CardDescription>Entre com seu usuário e senha.</CardDescription>
         </CardHeader>
@@ -73,7 +74,7 @@ export function AuthGate({ onAuth }: { onAuth: () => void }) {
                 <Spinner /> Entrando…
               </>
             ) : (
-              <>Entrar no meu-gpt</>
+              <>Entrar no {BRANDING.name}</>
             )}
           </Button>
         </CardFooter>
