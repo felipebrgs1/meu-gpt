@@ -3,7 +3,6 @@ export interface Env {
   VECTORIZE: VectorizeIndex;
   R2_BUCKET: R2Bucket;
   OPENROUTER_API_KEY: string;
-  JWT_SECRET: string;
   VOYAGE_API_KEY?: string;
   EMBED_MODEL: string;
   CHAT_MODEL_FAST: string;

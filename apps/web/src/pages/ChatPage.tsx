@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import type { Conversation } from "@meu-gpt/shared";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,8 +35,13 @@ export function ChatPage() {
   const [sourceIds, setSourceIds] = useState<string[]>([]);
   const [docs, setDocs] = useState<DocRecord[]>([]);
   const [busy, setBusy] = useState(false);
+  const [loadingConv, setLoadingConv] = useState(false);
   const [ingestOpen, setIngestOpen] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  // URL é a fonte da verdade: /c/:id = conversa aberta, / = nova conversa.
+  const navigate = useNavigate();
+  const { conversationId: paramId } = useParams({ strict: false }) as { conversationId?: string };
+  const activeIdRef = useRef<string | null>(null);
 
   const activeSlot = SLOTS.find((s) => s.id === slot) ?? SLOTS[1];
 
@@ -55,14 +61,46 @@ export function ChatPage() {
   }, [authed]);
 
   async function select(id: string) {
+    activeIdRef.current = id;
     setActiveId(id);
-    setLog(await getMessages(id).catch(() => []));
+    if (paramId !== id) void navigate({ to: "/c/$conversationId", params: { conversationId: id } });
+    setLoadingConv(true);
+    try {
+      setLog(await getMessages(id));
+    } catch {
+      // Id fantasma (conversa apagada em outro lugar): volta pro / em vez de
+      // prender a URL. Erro transitório mantém o estado e só limpa o log.
+      const cs = await listConversations().catch(() => null);
+      if (cs && !cs.some((c) => c.id === id)) {
+        newChat();
+        return;
+      }
+      setLog([]);
+    } finally {
+      setLoadingConv(false);
+    }
   }
 
   function newChat() {
+    activeIdRef.current = null;
     setActiveId(null);
     setLog([]);
+    if (paramId) void navigate({ to: "/" });
   }
+
+  // Deep link / voltar-avançar: sincroniza o estado com a URL.
+  useEffect(() => {
+    if (!authed) return;
+    if (paramId) {
+      if (activeIdRef.current !== paramId) void select(paramId);
+    } else if (activeIdRef.current !== null) {
+      activeIdRef.current = null;
+      setActiveId(null);
+      setLog([]);
+    }
+    // select/newChat via ref mirror: sem deps reativas além da URL.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paramId, authed]);
 
   async function remove(id: string) {
     await deleteConversation(id).catch(() => {});
@@ -76,6 +114,7 @@ export function ChatPage() {
     setBusy(true);
     const userMsg: UIMessage = { id: crypto.randomUUID(), role: "user", content: text };
     const history = [...log, userMsg];
+    const fromId = activeIdRef.current;
     setLog([...history, { id: "streaming", role: "assistant", content: "" }]);
     setInput("");
     let acc = "";
@@ -123,6 +162,10 @@ export function ChatPage() {
               return c;
             });
             setActiveId(convId);
+            // Primeira msg: URL muda de / para /c/:id (deep link copiável).
+            // fromId = conversa aberta no disparo; ref evita depender do state.
+            activeIdRef.current = convId;
+            if (fromId !== convId) void navigate({ to: "/c/$conversationId", params: { conversationId: convId } });
             setBusy(false);
             void refreshConvs();
           },
@@ -149,6 +192,7 @@ export function ChatPage() {
         <ChatSidebar
           convs={convs}
           activeId={activeId}
+          docsCount={docs.length}
           onNew={newChat}
           onSelect={select}
           onRemove={remove}
@@ -167,12 +211,15 @@ export function ChatPage() {
             sourceIds={sourceIds}
             onSourceIds={setSourceIds}
             busy={busy}
+            shareable={activeId !== null}
+            linkCopied={copied === "link"}
+            onCopyLink={() => copy("link", window.location.href)}
           />
 
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <ChatMessages
               log={log}
-              busy={busy}
+              loading={loadingConv}
               activeSlot={activeSlot}
               onQuickPrompt={send}
               copied={copied}

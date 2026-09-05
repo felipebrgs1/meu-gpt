@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { memo, useEffect, useId, useState, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import mermaid from "mermaid";
@@ -23,7 +23,7 @@ import { QUICK_PROMPTS, type SlotOption } from "../../lib/slots";
 
 interface Props {
   log: UIMessage[];
-  busy: boolean;
+  loading: boolean;
   activeSlot: SlotOption;
   onQuickPrompt: (prompt: string) => void;
   copied: string | null;
@@ -101,7 +101,27 @@ function CodeSpan({
   );
 }
 
+// Thinking real: 3 dots saltando + label (em vez do cursor ▍ solitário).
+// Aparece só na fase sem tokens; com tokens, o cursor pulsa após o texto.
+function Thinking() {
+  return (
+    <span className="flex items-center gap-2 text-sm text-muted-foreground" aria-label="pensando">
+      <span className="flex gap-1">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="size-1.5 animate-bounce rounded-full bg-current"
+            style={{ animationDelay: `${i * 150}ms` }}
+          />
+        ))}
+      </span>
+      pensando…
+    </span>
+  );
+}
+
 function renderContent(content: string, msgKey: string, isStreaming: boolean) {
+  if (!content && isStreaming) return <Thinking key={msgKey} />;
   return (
     <div key={msgKey} className="space-y-2 break-words">
       <ReactMarkdown
@@ -141,9 +161,28 @@ function renderContent(content: string, msgKey: string, isStreaming: boolean) {
       >
         {content}
       </ReactMarkdown>
+      {isStreaming && content ? (
+        <span className="ml-1 inline-block animate-pulse text-primary" aria-hidden>
+          ▍
+        </span>
+      ) : null}
     </div>
   );
 }
+
+// Corpo memoizado: msg concluída (props imutáveis) renderiza UMA vez.
+// Sem isso, cada token do stream re-renderizava a conversa inteira.
+const MessageBody = memo(function MessageBody({
+  content,
+  msgKey,
+  isStreaming,
+}: {
+  content: string;
+  msgKey: string;
+  isStreaming: boolean;
+}) {
+  return renderContent(content, msgKey, isStreaming);
+});
 
 // Formatação PT-BR dos badges de usage (tps, custo, cache hit).
 function formatTps(tps: number): string {
@@ -182,9 +221,29 @@ function Citations({ items }: { items: Citation[] }) {
   );
 }
 
-// Área central: hero (log vazio) ou lista de mensagens com scroll.
-export function ChatMessages({ log, busy, activeSlot, onQuickPrompt, copied, onCopy }: Props) {
+// Área central: skeleton (carregando deep link), hero (log vazio) ou mensagens.
+export function ChatMessages({ log, loading, activeSlot, onQuickPrompt, copied, onCopy }: Props) {
   if (log.length === 0) {
+    // Deep link / recarregamento: esqueletos em vez do herói piscando.
+    if (loading) {
+      return (
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="mx-auto w-full max-w-3xl px-4 py-6 space-y-5" aria-label="carregando conversa">
+            <div className="ml-auto h-10 w-2/3 animate-pulse rounded-2xl bg-muted/50" />
+            <div className="space-y-2">
+              <div className="h-4 w-full animate-pulse rounded bg-muted/50" />
+              <div className="h-4 w-11/12 animate-pulse rounded bg-muted/50" />
+              <div className="h-4 w-2/3 animate-pulse rounded bg-muted/50" />
+            </div>
+            <div className="ml-auto h-8 w-1/2 animate-pulse rounded-2xl bg-muted/50" />
+            <div className="space-y-2">
+              <div className="h-4 w-full animate-pulse rounded bg-muted/50" />
+              <div className="h-4 w-3/5 animate-pulse rounded bg-muted/50" />
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-4 md:p-6 overflow-y-auto">
         <div className="w-full max-w-2xl flex flex-col items-center text-center space-y-5 animate-in fade-in-50 duration-300">
@@ -260,7 +319,7 @@ export function ChatMessages({ log, busy, activeSlot, onQuickPrompt, copied, onC
                         className="max-w-[85%] rounded-2xl shadow-xs"
                       >
                         <BubbleContent className="text-sm leading-relaxed p-3.5">
-                          {renderContent(m.content || (busy && m.id === "streaming" ? "▍" : ""), m.id, m.id === "streaming")}
+                          {<MessageBody content={m.content} msgKey={m.id} isStreaming={m.id === "streaming"} />}
                         </BubbleContent>
                       </Bubble>
                       {m.role === "assistant" && (m.model || m.content) && (

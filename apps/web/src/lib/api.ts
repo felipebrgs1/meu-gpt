@@ -37,13 +37,13 @@ function authHeaders(): Record<string, string> {
   return { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` };
 }
 
-export async function mintDevToken(setupSecret: string): Promise<string> {
-  const res = await fetch(`${API}/api/v1/auth/dev-token`, {
+export async function login(username: string, password: string): Promise<string> {
+  const res = await fetch(`${API}/api/v1/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ setupSecret }),
+    body: JSON.stringify({ username, password }),
   });
-  if (!res.ok) throw new Error("setupSecret inválido");
+  if (!res.ok) throw new Error("usuário ou senha inválidos");
   const { token } = (await res.json()) as { token: string };
   localStorage.setItem("meu-gpt-token", token);
   return token;

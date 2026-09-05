@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { Env } from "../env.js";
-import { devToken, health } from "../controllers/auth.controller.js";
+import { health, login } from "../controllers/auth.controller.js";
 import * as conversations from "../controllers/conversations.controller.js";
 import * as documents from "../controllers/documents.controller.js";
 import { chat } from "../controllers/chat.controller.js";
@@ -11,7 +11,7 @@ export const routes = new Hono<{ Bindings: Env }>();
 
 // público
 routes.get("/api/v1/health", health);
-routes.post("/api/v1/auth/dev-token", devToken);
+routes.post("/api/v1/auth/login", login);
 
 // protegido
 routes.post("/api/v1/conversations", conversations.create);

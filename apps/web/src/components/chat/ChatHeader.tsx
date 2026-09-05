@@ -1,4 +1,4 @@
-import { CaretDown, Database, Globe } from "@phosphor-icons/react";
+import { CaretDown, Check, Database, Globe, Link } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,14 +23,22 @@ interface Props {
   sourceIds: string[];
   onSourceIds: (ids: string[]) => void;
   busy: boolean;
+  // Deep link da conversa aberta (null = ainda sem id): mostra copiar-link.
+  shareable: boolean;
+  linkCopied: boolean;
+  onCopyLink: () => void;
 }
 
-// Header: toggle de slot (fast/cheap/quality) + seletor de fontes do RAG.
-export function ChatHeader({ slot, onSlot, docs, sourceIds, onSourceIds, busy }: Props) {
+// Header estilo ChatGPT: hamburger (expande/colapsa a sidebar) + nome + slot.
+// À direita: link da conversa + seletor de fontes RAG + status de stream.
+export function ChatHeader({ slot, onSlot, docs, sourceIds, onSourceIds, busy, shareable, linkCopied, onCopyLink }: Props) {
   return (
-    <header className="flex h-13 shrink-0 items-center justify-between border-b border-border/50 px-4">
-      <div className="flex items-center gap-3">
-        <SidebarTrigger />
+    <header className="flex h-13 shrink-0 items-center justify-between gap-2 border-b border-border/50 px-3">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <SidebarTrigger className="size-8 text-muted-foreground hover:text-foreground" title="Alternar barra lateral" />
+        <span className="hidden min-[420px]:inline text-sm font-semibold tracking-tight text-foreground/90 select-none">
+          meu-gpt
+        </span>
         <ToggleGroup
           value={[slot]}
           onValueChange={(v) => {
@@ -51,6 +59,18 @@ export function ChatHeader({ slot, onSlot, docs, sourceIds, onSourceIds, busy }:
       </div>
 
       <div className="flex items-center gap-3">
+        {shareable && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
+            onClick={onCopyLink}
+            title="copiar link da conversa"
+          >
+            {linkCopied ? <Check className="size-3.5 text-emerald-400" /> : <Link className="size-3.5" />}
+            {linkCopied ? "copiado" : "link"}
+          </Button>
+        )}
         {/* Seletor de fontes RAG — sempre ativo */}
         <DropdownMenu>
           <DropdownMenuTrigger

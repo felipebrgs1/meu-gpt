@@ -9,3 +9,4 @@ dist/
 .DS_Store
 # expo (quando apps/mobile nascer)
 .expo/
+.tanstack/

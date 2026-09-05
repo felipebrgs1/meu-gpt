@@ -31,4 +31,4 @@ migrations_dir = "../../packages/db/migrations"
 binding = "R2_BUCKET"
 bucket_name = "meu-gpt-docs"
 
-# Segredos (nunca commitar): wrangler secret put OPENROUTER_API_KEY / JWT_SECRET / VOYAGE_API_KEY
+# Segredos (nunca commitar): wrangler secret put OPENROUTER_API_KEY / VOYAGE_API_KEY

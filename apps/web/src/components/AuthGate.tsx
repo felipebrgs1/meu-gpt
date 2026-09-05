@@ -5,22 +5,23 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import { mintDevToken } from "../lib/api";
+import { login } from "../lib/api";
 
-// Gate single-user: pede o setupSecret (JWT_SECRET) e troca por Bearer token.
+// Gate single-user: usuário + senha (hardcoded na API) trocados por token de sessão.
 export function AuthGate({ onAuth }: { onAuth: () => void }) {
-  const [secret, setSecret] = useState("");
+  const [user, setUser] = useState("felipeb");
+  const [pass, setPass] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   async function enter() {
-    if (!secret.trim() || busy) return;
+    if (!user.trim() || !pass || busy) return;
     setBusy(true);
     setErr("");
     try {
-      await mintDevToken(secret.trim());
+      await login(user.trim(), pass);
       onAuth();
     } catch {
-      setErr("setupSecret inválido. Confira o JWT_SECRET do Worker.");
+      setErr("usuário ou senha inválidos.");
     } finally {
       setBusy(false);
     }
@@ -35,19 +36,32 @@ export function AuthGate({ onAuth }: { onAuth: () => void }) {
             </div>
             <CardTitle className="text-xl">meu-gpt</CardTitle>
           </div>
-          <CardDescription>Cole seu setupSecret (JWT_SECRET) para entrar.</CardDescription>
+          <CardDescription>Entre com seu usuário e senha.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="setup">setupSecret</Label>
+            <Label htmlFor="user">usuário</Label>
             <Input
-              id="setup"
-              type="password"
-              value={secret}
-              onChange={(e) => setSecret(e.target.value)}
+              id="user"
+              value={user}
+              onChange={(e) => setUser(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && enter()}
-              placeholder="Cole seu JWT_SECRET..."
+              placeholder="usuário"
               className="mt-1"
+              autoComplete="username"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="pass">senha</Label>
+            <Input
+              id="pass"
+              type="password"
+              value={pass}
+              onChange={(e) => setPass(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && enter()}
+              placeholder="senha"
+              className="mt-1"
+              autoComplete="current-password"
             />
           </div>
           {err && <p className="text-xs text-destructive">{err}</p>}
