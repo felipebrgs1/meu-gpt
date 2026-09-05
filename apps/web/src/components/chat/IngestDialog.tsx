@@ -69,7 +69,13 @@ export function IngestDialog({ open, onOpenChange, onChanged }: Props) {
   }
 
   useEffect(() => {
-    if (open) void refreshDocs();
+    if (!open) return;
+    // Fetch com setState nos handlers do .then (fora do corpo síncrono do
+    // effect — react/set-state-in-effect).
+    listDocuments().then(
+      (docs) => setDocs(docs),
+      () => setDocs([]),
+    );
   }, [open]);
 
   async function submitFile() {

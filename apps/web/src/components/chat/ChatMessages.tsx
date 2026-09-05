@@ -1,4 +1,4 @@
-import { memo, useEffect, useId, useState, type ReactNode } from "react";
+import { memo, useEffect, useEffectEvent, useId, useState, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import mermaid from "mermaid";
@@ -50,21 +50,17 @@ function Mermaid({ code }: { code: string }) {
   const [svg, setSvg] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const rawId = useId();
+  // Render assíncrono via effect event (setState fora do corpo do effect —
+  // react/set-state-in-effect). O reset a cada troca de código vem da key
+  // no uso (<Mermaid key={text} />): remount = estado zerado.
+  const renderDiagram = useEffectEvent((svgId: string, src: string) => {
+    mermaid.render(svgId, src).then(
+      ({ svg }) => setSvg(svg),
+      () => setFailed(true),
+    );
+  });
   useEffect(() => {
-    let alive = true;
-    setSvg(null);
-    setFailed(false);
-    mermaid
-      .render(`mmd-${rawId.replace(/[^a-zA-Z0-9]/g, "")}`, code)
-      .then(({ svg }) => {
-        if (alive) setSvg(svg);
-      })
-      .catch(() => {
-        if (alive) setFailed(true);
-      });
-    return () => {
-      alive = false;
-    };
+    renderDiagram(`mmd-${rawId.replace(/[^a-zA-Z0-9]/g, "")}`, code);
   }, [code, rawId]);
   if (failed) {
     return (
@@ -105,7 +101,7 @@ function CodeSpan({
   const text = String(children ?? "").replace(/\n$/, "");
   const lang = /language-([\w-]+)/.exec(className ?? "")?.[1];
   // Diagrama só com bloco final (fora do streaming): parcial vira código.
-  if (lang === "mermaid" && renderDiagram && text.trim()) return <Mermaid code={text} />;
+  if (lang === "mermaid" && renderDiagram && text.trim()) return <Mermaid key={text} code={text} />;
   if (!lang && !text.includes("\n")) {
     return (
       <code className="rounded bg-black/50 px-1.5 py-0.5 font-mono text-[12.5px]">{children}</code>

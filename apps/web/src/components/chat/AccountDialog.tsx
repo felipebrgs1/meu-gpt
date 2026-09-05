@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,16 +29,24 @@ export function AccountDialog({ open, onOpenChange, username }: Props) {
   const [ok, setOk] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      setName(username);
-      setCurrent("");
-      setNext("");
-      setConfirm("");
-      setErr("");
-      setOk("");
-    }
-  }, [open, username]);
+  // Reseta o form ao abrir (ou se o username mudar): ajuste de estado
+  // durante o render no padrão prev-comparison — sem effect, sem cascata.
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevUser, setPrevUser] = useState(username);
+  if (prevOpen !== open || prevUser !== username) {
+    setPrevOpen(open);
+    setPrevUser(username);
+    if (open) resetForm();
+  }
+
+  function resetForm() {
+    setName(username);
+    setCurrent("");
+    setNext("");
+    setConfirm("");
+    setErr("");
+    setOk("");
+  }
 
   async function submit() {
     if (busy) return;

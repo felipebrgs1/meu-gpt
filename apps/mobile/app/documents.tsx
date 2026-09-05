@@ -20,6 +20,9 @@ export default function Documents() {
   }, []);
 
   useEffect(() => {
+    // Mount-fetch: setState roda após o await, sem cascata. Disable
+    // cirúrgico (a regra implica com chamadas sem argumento no effect).
+    // oxlint-disable-next-line react/set-state-in-effect
     void refresh();
   }, [refresh]);
 

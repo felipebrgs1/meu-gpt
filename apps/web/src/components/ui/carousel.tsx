@@ -57,11 +57,13 @@ function Carousel({
   const [canScrollPrev, setCanScrollPrev] = React.useState(false);
   const [canScrollNext, setCanScrollNext] = React.useState(false);
 
-  const onSelect = React.useCallback((api: CarouselApi) => {
-    if (!api) return;
-    setCanScrollPrev(api.canScrollPrev());
-    setCanScrollNext(api.canScrollNext());
-  }, []);
+  // Handler partilhado entre o effect e os listeners do embla: effect event
+  // (setState fora do corpo do effect — react/set-state-in-effect).
+  const onSelect = React.useEffectEvent((emblaApi: CarouselApi) => {
+    if (!emblaApi) return;
+    setCanScrollPrev(emblaApi.canScrollPrev());
+    setCanScrollNext(emblaApi.canScrollNext());
+  });
 
   const scrollPrev = React.useCallback(() => {
     api?.scrollPrev();
@@ -84,13 +86,22 @@ function Carousel({
     [scrollPrev, scrollNext],
   );
 
-  React.useEffect(() => {
-    if (!api || !setApi) return;
-    setApi(api);
-  }, [api, setApi]);
+  // Encaminha a instância do embla ao pai via effect event (setState fora
+  // do corpo do effect — react/set-state-in-effect).
+  const forwardApi = React.useEffectEvent((embla: CarouselApi) => {
+    if (setApi) setApi(embla);
+  });
 
   React.useEffect(() => {
     if (!api) return;
+    forwardApi(api);
+  }, [api]);
+
+  React.useEffect(() => {
+    if (!api) return;
+    // Padrão upstream do shadcn: sincroniza o estado do embla na montagem.
+    // Roda uma vez por instância (sem cascata) — disable cirúrgico.
+    // oxlint-disable-next-line react/set-state-in-effect
     onSelect(api);
     api.on("reInit", onSelect);
     api.on("select", onSelect);
@@ -98,7 +109,7 @@ function Carousel({
     return () => {
       api?.off("select", onSelect);
     };
-  }, [api, onSelect]);
+  }, [api]);
 
   return (
     <CarouselContext.Provider

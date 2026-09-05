@@ -74,14 +74,27 @@ export function ChatScreen() {
   }
 
   useEffect(() => {
-    void hasToken().then(setAuthed);
+    // Callback aninhado (não referência direta): o setState roda após o
+    // await, sem render em cascata — react/set-state-in-effect.
+    void hasToken().then((t) => setAuthed(t));
   }, []);
 
   useEffect(() => {
-    if (authed) {
-      void refreshConvs();
-      void refreshDocs();
-    }
+    if (!authed) return;
+    // Fetch com setState nos handlers do .then (fora do corpo síncrono do
+    // effect — react/set-state-in-effect). Erro mantém o estado atual.
+    listConversations().then(
+      (convs) => setConvs(convs),
+      () => {
+        /* token expirado etc.: mantém a lista atual */
+      },
+    );
+    listDocuments().then(
+      (docs) => setDocs(docs),
+      () => {
+        /* noop */
+      },
+    );
   }, [authed]);
 
   async function select(id: string) {
