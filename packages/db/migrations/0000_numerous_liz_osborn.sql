@@ -1,0 +1,30 @@
+CREATE TABLE `conversations` (
+	`id` text PRIMARY KEY NOT NULL,
+	`title` text DEFAULT 'Nova conversa' NOT NULL,
+	`slot` text DEFAULT 'cheap' NOT NULL,
+	`created_at` text NOT NULL,
+	`updated_at` text NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE `documents` (
+	`id` text PRIMARY KEY NOT NULL,
+	`title` text NOT NULL,
+	`r2_key` text NOT NULL,
+	`chunk_count` integer DEFAULT 0 NOT NULL,
+	`created_at` text NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE `messages` (
+	`id` text PRIMARY KEY NOT NULL,
+	`conversation_id` text NOT NULL,
+	`role` text NOT NULL,
+	`content` text NOT NULL,
+	`model` text,
+	`tokens_in` integer,
+	`tokens_out` integer,
+	`latency_ms` integer,
+	`cost_usd` real,
+	`citations_json` text,
+	`created_at` text NOT NULL,
+	FOREIGN KEY (`conversation_id`) REFERENCES `conversations`(`id`) ON UPDATE no action ON DELETE cascade
+);

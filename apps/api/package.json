@@ -1,0 +1,30 @@
+{
+  "name": "@meu-gpt/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "tsc --noEmit -p tsconfig.json",
+    "lint": "prettier --check src",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "deploy": "wrangler deploy",
+    "vectorize:create": "wrangler vectorize create meu-gpt --dimensions=1024 --metric=cosine"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.9.1",
+    "@meu-gpt/db": "workspace:*",
+    "@meu-gpt/rag": "workspace:*",
+    "@meu-gpt/shared": "workspace:*",
+    "drizzle-orm": "^0.36.4",
+    "hono": "^4.13.7",
+    "hono-rate-limiter": "^0.5.3",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240925.0",
+    "@types/node": "^26.4.1",
+    "typescript": "^5.6.3",
+    "wrangler": "^3.26.0"
+  }
+}

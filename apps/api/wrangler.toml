@@ -1,0 +1,32 @@
+name = "meu-gpt-api"
+main = "src/index.ts"
+compatibility_date = "2024-09-25"
+account_id = "78fedbeba68de80a823e65652da5f2c5" # pessoal (Felipeborgacogame). Trocar se quiser usar a Vozeduca.
+
+[vars]
+EMBED_MODEL = "perplexity/pplx-embed-v1-0.6b"
+CHAT_MODEL_FAST = "x-ai/grok-4.1-fast:free"
+CHAT_MODEL_CHEAP = "z-ai/glm-5.3-flash"
+CHAT_MODEL_QUALITY = "z-ai/glm-5.3-flash"
+RERANK_ENABLED = "false"
+RERANK_MODEL = "voyageai/rerank-2.5-lite"
+RAG_TOPK = "20"
+RERANK_TOPN = "5"
+SINGLE_USER_ID = "me"
+
+# npx wrangler vectorize create meu-gpt --dimensions=1024 --metric=cosine
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "meu-gpt"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "meu-gpt"
+database_id = "850e0799-fa8d-45f2-a799-f76f25e58cd5"
+migrations_dir = "../../packages/db/migrations"
+
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "meu-gpt-docs"
+
+# Segredos (nunca commitar): wrangler secret put OPENROUTER_API_KEY / JWT_SECRET / VOYAGE_API_KEY
