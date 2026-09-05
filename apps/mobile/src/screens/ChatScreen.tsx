@@ -37,7 +37,12 @@ export function ChatScreen() {
   const [sourceIds, setSourceIds] = useState<string[]>([]);
   const [docs, setDocs] = useState<DocRecord[]>([]);
   const [busy, setBusy] = useState(false);
-  const [sheets, setSheets] = useState({ convs: false, slot: false, ingest: false, sources: false });
+  const [sheets, setSheets] = useState({
+    convs: false,
+    slot: false,
+    ingest: false,
+    sources: false,
+  });
   const activeIdRef = useRef<string | null>(null);
   const listRef = useRef<FlatList<UIMessage> | null>(null);
 
@@ -131,7 +136,11 @@ export function ChatScreen() {
       }
       setLog((l) => {
         const c = [...l];
-        c[c.length - 1] = { ...c[c.length - 1], id: `${Date.now()}-err`, content: acc || `erro: ${msg}` };
+        c[c.length - 1] = {
+          ...c[c.length - 1],
+          id: `${Date.now()}-err`,
+          content: acc || `erro: ${msg}`,
+        };
         return c;
       });
       setBusy(false);
@@ -217,7 +226,13 @@ export function ChatScreen() {
       </View>
 
       <View style={styles.body}>
-        <ChatMessages log={log} busy={busy} activeSlot={activeSlot} onQuickPrompt={send} listRef={listRef} />
+        <ChatMessages
+          log={log}
+          busy={busy}
+          activeSlot={activeSlot}
+          onQuickPrompt={send}
+          listRef={listRef}
+        />
       </View>
 
       <Composer
@@ -257,7 +272,9 @@ export function ChatScreen() {
         open={sheets.sources}
         docs={docs}
         sourceIds={sourceIds}
-        onToggle={(id) => setSourceIds((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))}
+        onToggle={(id) =>
+          setSourceIds((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
+        }
         onReset={() => setSourceIds([])}
         onClose={() => close("sources")}
       />

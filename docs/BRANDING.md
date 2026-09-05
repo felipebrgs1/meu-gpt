@@ -17,15 +17,15 @@ O `dev` e o `build` da web rodam o sync automaticamente (`predev`/`prebuild`).
 
 ## O que cada campo faz
 
-| Campo | Onde aparece |
-|---|---|
-| `[app] name` | título da aba, header do chat, tela de login, PWA, nome do app Expo |
-| `[app] tagline` | `<meta description>`, descrição do PWA |
-| `[app] slug` | PWA + Expo `slug`/`scheme` (url-safe: minúsculas-números-hífens) |
-| `[theme] accent` | `--primary`/`--ring`/`--sidebar-primary` do shadcn (botões, destaques, foco) |
-| `[theme] background` | `<meta theme-color>`, splash, fundo do PWA |
-| `[icons] svg/png_180/png_192/png_512/favicon_ico` | copiados para `apps/web/public/` (favicon, apple-touch, PWA) |
-| `[icons] app_icon` | ícone do Expo (PNG 1024); copiado para `apps/mobile/assets/branding/` se estiver fora de `apps/mobile/` |
+| Campo                                             | Onde aparece                                                                                            |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `[app] name`                                      | título da aba, header do chat, tela de login, PWA, nome do app Expo                                     |
+| `[app] tagline`                                   | `<meta description>`, descrição do PWA                                                                  |
+| `[app] slug`                                      | PWA + Expo `slug`/`scheme` (url-safe: minúsculas-números-hífens)                                        |
+| `[theme] accent`                                  | `--primary`/`--ring`/`--sidebar-primary` do shadcn (botões, destaques, foco)                            |
+| `[theme] background`                              | `<meta theme-color>`, splash, fundo do PWA                                                              |
+| `[icons] svg/png_180/png_192/png_512/favicon_ico` | copiados para `apps/web/public/` (favicon, apple-touch, PWA)                                            |
+| `[icons] app_icon`                                | ícone do Expo (PNG 1024); copiado para `apps/mobile/assets/branding/` se estiver fora de `apps/mobile/` |
 
 Todos os `[icons]` são opcionais: campo ausente ou arquivo inexistente =
 mantém o padrão atual (com aviso, sem erro).
@@ -47,7 +47,7 @@ Tamanhos mínimos sensatos: SVG livre; PNG 180/192/512 nos tamanhos do nome;
   e a chave `localStorage` seguem estáveis — rebatizar o app não desloga ninguém
   nem gira segredo.
 - **Modo claro/escuro:** o app é dark-only (body, mermaid e splash nasceram dark).
-  O TOML troca o *accent*, não o esquema. Um modo claro exigiria retemar os
+  O TOML troca o _accent_, não o esquema. Um modo claro exigiria retemar os
   componentes.
 - **Nomes de infra:** Worker/D1/R2/Vectorize continuam `meu-gpt*` — renomear
   infra é recriar recursos, não rebrand.

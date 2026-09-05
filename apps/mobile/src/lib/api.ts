@@ -57,9 +57,7 @@ export type UploadPayload = PickedFile | Blob;
 // value can't stick as "" and silently turn every fetch into a same-origin
 // request against the Expo server itself.
 const fromEnv = process.env.EXPO_PUBLIC_API_URL?.trim();
-const fromExtra = (
-  Constants.expoConfig?.extra as { apiUrl?: string } | undefined
-)?.apiUrl?.trim();
+const fromExtra = (Constants.expoConfig?.extra as { apiUrl?: string } | undefined)?.apiUrl?.trim();
 const API = (fromEnv || fromExtra || "").replace(/\/$/, "");
 
 if (!API && typeof __DEV__ !== "undefined" && __DEV__) {

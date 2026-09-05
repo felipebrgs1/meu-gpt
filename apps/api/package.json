@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "node ../../scripts/sync-env.mjs && wrangler dev --ip 0.0.0.0",
     "build": "tsc --noEmit -p tsconfig.json",
-    "lint": "prettier --check src",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "deploy": "wrangler deploy",
     "vectorize:create": "wrangler vectorize create meu-gpt --dimensions=1024 --metric=cosine"
@@ -23,7 +22,6 @@
   "devDependencies": {
     "@cloudflare/workers-types": "5.20260905.1",
     "@types/node": "^26.4.1",
-    "typescript": "^5.9.3",
     "wrangler": "^4.129.0"
   }
 }

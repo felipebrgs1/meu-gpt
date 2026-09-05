@@ -11,6 +11,9 @@ ChatGPT pessoal (single-user) com RAG: Hono em Cloudflare Workers, D1 (SQL), R2 
 ```bash
 pnpm install                        # setup (pnpm 12 — usar exatamente esta versão)
 pnpm typecheck                      # turbo: todos os packages
+pnpm lint                           # oxlint (raiz, repo inteiro)
+pnpm format                         # oxfmt --write (formata tudo)
+pnpm format:check                   # oxfmt --check (modo CI)
 pnpm build                          # turbo build
 pnpm dev                            # turbo dev (api :8787 + web :5173)
 pnpm --filter @meu-gpt/api dev      # só api (sync-env roda antes do wrangler)
@@ -37,6 +40,12 @@ pnpm cleanup                          # apaga conversas [E2E-TEST]/[TEST] órfã
    Componentes usam `BRANDING` de `apps/web/src/branding.gen.ts` (gerado por
    `node scripts/sync-branding.mjs` — o dev/build da web roda sozinho). Nunca
    escrever o nome do app direto no JSX; `*.gen.*` são commitados.
+9. **Toolchain centralizada na raiz:** `typescript`, `oxlint` e `oxfmt` vivem
+   SÓ no `package.json` da raiz (packages resolvem via PATH do pnpm — nunca
+   declarar `typescript`/`prettier` por package). Lint = `pnpm lint` (oxlint,
+   zero-config); formato = `pnpm format` (oxfmt, config em `.oxfmtrc.json` —
+   `pnpm-lock.yaml`, `packages/db/migrations/meta/**` e `routeTree.gen.ts`
+   são tool-owned e ficam fora).
 
 ## Arquitetura (onde mexer o quê)
 

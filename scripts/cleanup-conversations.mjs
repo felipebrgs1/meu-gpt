@@ -26,10 +26,12 @@ function run(sql) {
 
 function ask(question) {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
-  return new Promise((resolve) => rl.question(question, (a) => {
-    rl.close();
-    resolve(a);
-  }));
+  return new Promise((resolve) =>
+    rl.question(question, (a) => {
+      rl.close();
+      resolve(a);
+    }),
+  );
 }
 
 async function main() {
@@ -39,13 +41,18 @@ async function main() {
   const convs = run("SELECT id, title FROM conversations ORDER BY updated_at DESC LIMIT 200;");
   const victims = ALL
     ? convs
-    : convs.filter((c) => TEST_PATTERNS.some((p) => (c.title ?? "").toLowerCase().includes(p.toLowerCase())));
+    : convs.filter((c) =>
+        TEST_PATTERNS.some((p) => (c.title ?? "").toLowerCase().includes(p.toLowerCase())),
+      );
   const orphans = run(
     "SELECT m.id FROM messages m LEFT JOIN conversations c ON m.conversation_id = c.id WHERE c.id IS NULL LIMIT 500;",
   );
 
-  console.log(`[cleanup] conversas: ${convs.length} total, ${victims.length} para apagar, ${orphans.length} msgs órfãs`);
-  for (const v of victims.slice(0, 15)) console.log(`  - ${v.id} | ${(v.title ?? "").slice(0, 70)}`);
+  console.log(
+    `[cleanup] conversas: ${convs.length} total, ${victims.length} para apagar, ${orphans.length} msgs órfãs`,
+  );
+  for (const v of victims.slice(0, 15))
+    console.log(`  - ${v.id} | ${(v.title ?? "").slice(0, 70)}`);
   if (victims.length > 15) console.log(`  … +${victims.length - 15}`);
 
   if (victims.length === 0 && orphans.length === 0) {

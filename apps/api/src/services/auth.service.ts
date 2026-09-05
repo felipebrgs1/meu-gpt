@@ -34,7 +34,10 @@ export function generateSalt(): string {
 }
 
 export async function hashPassword(password: string, salt: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${salt}:${password}`));
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(`${salt}:${password}`),
+  );
   return toHex(digest);
 }
 
@@ -72,7 +75,11 @@ export async function needsPasswordChange(db: Db): Promise<boolean> {
 
 // Valida credencial: com troca feita, só username + hash em D1 valem;
 // sem troca, só o default.
-export async function verifyCredentials(db: Db, username: unknown, password: unknown): Promise<boolean> {
+export async function verifyCredentials(
+  db: Db,
+  username: unknown,
+  password: unknown,
+): Promise<boolean> {
   if (typeof username !== "string" || typeof password !== "string") return false;
   const row = await readState(db);
   if (!row) return username.trim() === LOGIN_USER && safeEqual(password, LOGIN_PASS_DEFAULT);
@@ -91,7 +98,8 @@ export function validateNewUsername(newUsername: unknown, currentUsername: unkno
   if (typeof newUsername !== "string") return "novo usuário inválido";
   const name = newUsername.trim();
   if (!name) return "novo usuário obrigatório";
-  if (name.length < MIN_USERNAME_LEN) return `usuário precisa de ao menos ${MIN_USERNAME_LEN} caracteres`;
+  if (name.length < MIN_USERNAME_LEN)
+    return `usuário precisa de ao menos ${MIN_USERNAME_LEN} caracteres`;
   if (name.length > MAX_USERNAME_LEN) return "usuário muito longo (50 chars max)";
   if (typeof currentUsername === "string" && name === currentUsername.trim()) {
     return "novo usuário precisa ser diferente do atual";
@@ -102,9 +110,11 @@ export function validateNewUsername(newUsername: unknown, currentUsername: unkno
 // Regras da nova senha: tamanho mínimo, diferente da atual e do default.
 export function validateNewPassword(newPassword: unknown, currentPassword: unknown): string | null {
   if (typeof newPassword !== "string" || !newPassword) return "nova senha obrigatória";
-  if (newPassword.length < MIN_PASSWORD_LEN) return `nova senha precisa de ao menos ${MIN_PASSWORD_LEN} caracteres`;
+  if (newPassword.length < MIN_PASSWORD_LEN)
+    return `nova senha precisa de ao menos ${MIN_PASSWORD_LEN} caracteres`;
   if (newPassword.length > 200) return "nova senha muito longa (200 chars max)";
-  if (typeof currentPassword === "string" && newPassword === currentPassword) return "nova senha precisa ser diferente da atual";
+  if (typeof currentPassword === "string" && newPassword === currentPassword)
+    return "nova senha precisa ser diferente da atual";
   if (newPassword === LOGIN_PASS_DEFAULT) return "escolha uma senha diferente da inicial";
   return null;
 }
@@ -121,10 +131,12 @@ export async function changeCredentials(
   currentPassword: unknown,
   changes: CredentialChanges,
 ): Promise<{ ok: true; username: string; sessionVersion: number } | { ok: false; reason: string }> {
-  if (typeof currentPassword !== "string" || !currentPassword) return { ok: false, reason: "senha atual obrigatória" };
+  if (typeof currentPassword !== "string" || !currentPassword)
+    return { ok: false, reason: "senha atual obrigatória" };
   const wantPassword = changes.newPassword !== undefined;
   const wantUsername = changes.newUsername !== undefined;
-  if (!wantPassword && !wantUsername) return { ok: false, reason: "informe o novo usuário e/ou a nova senha" };
+  if (!wantPassword && !wantUsername)
+    return { ok: false, reason: "informe o novo usuário e/ou a nova senha" };
 
   const row = await readState(db);
   const currentUsername = row?.username ?? LOGIN_USER;
@@ -149,7 +161,9 @@ export async function changeCredentials(
   if (!currentOk) return { ok: false, reason: "senha atual incorreta" };
 
   const username =
-    wantUsername && typeof changes.newUsername === "string" ? changes.newUsername.trim() : currentUsername;
+    wantUsername && typeof changes.newUsername === "string"
+      ? changes.newUsername.trim()
+      : currentUsername;
   // Trocar só o usuário não quita a troca obrigatória da 1ª sessão.
   const mustChange = wantPassword ? 0 : (row?.mustChange ?? 1);
   // Salt novo a cada troca de senha; sem troca, preserva a senha atual
@@ -205,7 +219,10 @@ export function isValidToken(token: string, expected: string | undefined): boole
 // Versão 0 = formato legado (o próprio SESSION_TOKEN), para não deslogar
 // ninguém no deploy desta mudança; a partir da 1ª troca o formato passa a
 // ser `${secret}.${version}`.
-export function sessionToken(secret: string | undefined, row: { sessionVersion?: number | null } | null): string {
+export function sessionToken(
+  secret: string | undefined,
+  row: { sessionVersion?: number | null } | null,
+): string {
   const v = row?.sessionVersion ?? 0;
   if (!secret || v <= 0) return secret ?? "";
   return `${secret}.${v}`;

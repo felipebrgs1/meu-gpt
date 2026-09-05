@@ -40,7 +40,9 @@ export class OpenRouterEmbedding implements EmbeddingProvider {
     const json = (await res.json()) as { data: { embedding: number[] }[] };
     for (const d of json.data) {
       if (d.embedding.length !== 1024) {
-        throw new Error(`dimensão inesperada ${d.embedding.length}, esperado 1024. Não truncar — recriar índice.`);
+        throw new Error(
+          `dimensão inesperada ${d.embedding.length}, esperado 1024. Não truncar — recriar índice.`,
+        );
       }
     }
     return json.data.map((d) => d.embedding);

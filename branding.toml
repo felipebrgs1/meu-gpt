@@ -21,9 +21,9 @@ background = "#09090b"
 # Caminhos relativos à RAIZ do monorepo. Tudo opcional:
 # campo ausente ou arquivo inexistente = mantém o padrão atual.
 # Troque pelos seus arquivos (ex.: branding/meu-icone.svg) e rode o sync.
-svg = "apps/web/public/favicon.svg"          # favicon.svg da web
-png_180 = "apps/web/public/apple-touch-icon.png"  # apple-touch-icon
-png_192 = "apps/web/public/icon-192.png"     # PWA
-png_512 = "apps/web/public/icon-512.png"     # PWA
-favicon_ico = "apps/web/public/favicon.ico"  # fallback legacy
-app_icon = "apps/mobile/assets/icon.png"     # PNG 1024 do Expo (mobile)
+svg = "apps/web/public/favicon.svg" # favicon.svg da web
+png_180 = "apps/web/public/apple-touch-icon.png" # apple-touch-icon
+png_192 = "apps/web/public/icon-192.png" # PWA
+png_512 = "apps/web/public/icon-512.png" # PWA
+favicon_ico = "apps/web/public/favicon.ico" # fallback legacy
+app_icon = "apps/mobile/assets/icon.png" # PNG 1024 do Expo (mobile)

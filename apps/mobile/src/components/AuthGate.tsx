@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { login } from "../lib/api";
 import { colors, common, spacing } from "../theme";
 
@@ -60,7 +68,11 @@ export function AuthGate({ onAuth }: { onAuth: () => void }) {
         />
         {err ? <Text style={styles.err}>{err}</Text> : null}
         <TouchableOpacity style={[common.button, styles.cta]} onPress={enter} disabled={busy}>
-          {busy ? <ActivityIndicator color={colors.primaryText} /> : <Text style={common.buttonText}>Entrar no meu-gpt</Text>}
+          {busy ? (
+            <ActivityIndicator color={colors.primaryText} />
+          ) : (
+            <Text style={common.buttonText}>Entrar no meu-gpt</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>

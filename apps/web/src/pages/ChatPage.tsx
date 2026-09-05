@@ -84,7 +84,9 @@ export function ChatPage() {
         if (s.username) setAccountUser(s.username);
         if (!s.mustChangePassword) {
           void refreshConvs();
-          listDocuments().then(setDocs).catch(() => {});
+          listDocuments()
+            .then(setDocs)
+            .catch(() => {});
         }
       })
       .catch((e) => {
@@ -181,7 +183,11 @@ export function ChatPage() {
       }
       setLog((l) => {
         const c = [...l];
-        c[c.length - 1] = { ...c[c.length - 1], id: crypto.randomUUID(), content: acc || `erro: ${msg}` };
+        c[c.length - 1] = {
+          ...c[c.length - 1],
+          id: crypto.randomUUID(),
+          content: acc || `erro: ${msg}`,
+        };
         return c;
       });
       setBusy(false);
@@ -225,7 +231,8 @@ export function ChatPage() {
             // Primeira msg: URL muda de / para /c/:id (deep link copiável).
             // fromId = conversa aberta no disparo; ref evita depender do state.
             activeIdRef.current = convId;
-            if (fromId !== convId) void navigate({ to: "/c/$conversationId", params: { conversationId: convId } });
+            if (fromId !== convId)
+              void navigate({ to: "/c/$conversationId", params: { conversationId: convId } });
             setBusy(false);
             void refreshConvs();
           },
@@ -254,7 +261,9 @@ export function ChatPage() {
         onDone={() => {
           setMustChange(false);
           void refreshConvs();
-          listDocuments().then(setDocs).catch(() => {});
+          listDocuments()
+            .then(setDocs)
+            .catch(() => {});
         }}
       />
     );
@@ -316,14 +325,21 @@ export function ChatPage() {
         <IngestDialog
           open={ingestOpen}
           onOpenChange={setIngestOpen}
-          onChanged={() => listDocuments().then(setDocs).catch(() => {})}
+          onChanged={() =>
+            listDocuments()
+              .then(setDocs)
+              .catch(() => {})
+          }
         />
 
         <AccountDialog
           open={accountOpen}
           onOpenChange={(v) => {
             setAccountOpen(v);
-            if (!v) getAuthStatus().then((s) => s.username && setAccountUser(s.username)).catch(() => {});
+            if (!v)
+              getAuthStatus()
+                .then((s) => s.username && setAccountUser(s.username))
+                .catch(() => {});
           }}
           username={accountUser}
         />

@@ -41,9 +41,7 @@ export async function checkRateLimit(
         hits: 1,
         updatedAt: new Date(now).toISOString(),
       });
-      await db
-        .delete(rateLimits)
-        .where(lt(rateLimits.windowStart, windowStart));
+      await db.delete(rateLimits).where(lt(rateLimits.windowStart, windowStart));
     } else {
       await db.update(rateLimits).set({ hits }).where(eq(rateLimits.key, key));
     }

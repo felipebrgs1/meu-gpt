@@ -83,7 +83,9 @@ export function sseChatResponse(deps: ChatSSEDeps): Response {
           pump.firstTokenMs != null ? pump.endMs - pump.firstTokenMs : pump.endMs - meta.startedAt,
         );
         const tps =
-          tokensOut != null && tokensOut > 0 ? Math.round((tokensOut / (spanMs / 1000)) * 10) / 10 : null;
+          tokensOut != null && tokensOut > 0
+            ? Math.round((tokensOut / (spanMs / 1000)) * 10) / 10
+            : null;
 
         const usage: ChatUsage = {
           model: meta.model,

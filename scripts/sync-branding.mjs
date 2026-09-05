@@ -33,8 +33,8 @@ const icons = toml.icons ?? {};
 
 // --- validação (falha alto, com mensagem útil) ---
 const name = String(app.name ?? "").trim();
-if (!name) fail('[app] name vazio.');
-if (name.length > 40) fail('[app] name com mais de 40 chars.');
+if (!name) fail("[app] name vazio.");
+if (name.length > 40) fail("[app] name com mais de 40 chars.");
 const slug = String(app.slug ?? "").trim();
 if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
   fail('[app] slug deve ser url-safe: minúsculas, números e hífens (ex.: "meu-cerebro").');
@@ -44,7 +44,8 @@ const HEX = /^#[0-9a-fA-F]{6}$/;
 const accent = String(theme.accent ?? "").trim();
 const background = String(theme.background ?? "").trim();
 if (!HEX.test(accent)) fail(`[theme] accent inválido (${accent || "vazio"}): use hex #rrggbb.`);
-if (!HEX.test(background)) fail(`[theme] background inválido (${background || "vazio"}): use hex #rrggbb.`);
+if (!HEX.test(background))
+  fail(`[theme] background inválido (${background || "vazio"}): use hex #rrggbb.`);
 
 // Resolve um ícone declarado: retorna o path absoluto ou null (ausente = mantém padrão).
 function resolveIcon(key) {
@@ -90,7 +91,13 @@ writeFileSync(resolve(webDir, "src/branding.gen.css"), genCss);
 
 // --- 3. ícones da web (public/) ---
 const publicDir = resolve(webDir, "public");
-const webIcons = { svg: "favicon.svg", png_180: "apple-touch-icon.png", png_192: "icon-192.png", png_512: "icon-512.png", favicon_ico: "favicon.ico" };
+const webIcons = {
+  svg: "favicon.svg",
+  png_180: "apple-touch-icon.png",
+  png_192: "icon-192.png",
+  png_512: "icon-512.png",
+  favicon_ico: "favicon.ico",
+};
 const copied = [];
 for (const [key, destName] of Object.entries(webIcons)) {
   const src = resolveIcon(key);
@@ -108,7 +115,10 @@ if (/meta name="description"/.test(html)) {
   html = html.replace("</head>", `    <meta name="description" content="${tagline}" />\n  </head>`);
 }
 if (!/rel="manifest"/.test(html)) {
-  html = html.replace("</head>", `    <link rel="manifest" href="/manifest.webmanifest" />\n  </head>`);
+  html = html.replace(
+    "</head>",
+    `    <link rel="manifest" href="/manifest.webmanifest" />\n  </head>`,
+  );
 }
 writeFileSync(htmlPath, html);
 
@@ -118,7 +128,12 @@ if (existsSync(resolve(publicDir, "icon-192.png"))) {
   manifestIcons.push({ src: "/icon-192.png", sizes: "192x192", type: "image/png" });
 }
 if (existsSync(resolve(publicDir, "icon-512.png"))) {
-  manifestIcons.push({ src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" });
+  manifestIcons.push({
+    src: "/icon-512.png",
+    sizes: "512x512",
+    type: "image/png",
+    purpose: "any maskable",
+  });
 }
 const manifest = {
   name,

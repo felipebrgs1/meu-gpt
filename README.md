@@ -26,13 +26,13 @@ WEB estática (meu-gpt-web) ──HTTPS──▶ API Hono (meu-gpt-api) ──�
 
 ## Stack
 
-| Peça | Tecnologia |
-|---|---|
-| Monorepo | pnpm 12 + Turborepo (`apps/web`, `apps/api`, `packages/db\|shared\|rag`) |
-| API | Hono 4 + Drizzle + Zod, em Cloudflare Workers |
-| Web | React 19 + TanStack Router + Tailwind 4 + shadcn/Base UI, Worker só de assets |
-| Dados | D1 `meu-gpt`, Vectorize `meu-gpt` (1024d cosine), R2 `meu-gpt-docs` |
-| IA | OpenRouter: `perplexity/pplx-embed-v1-0.6b` (1024 nativo, sem truncate) + slots de chat + rerank desligável |
+| Peça     | Tecnologia                                                                                                  |
+| -------- | ----------------------------------------------------------------------------------------------------------- |
+| Monorepo | pnpm 12 + Turborepo (`apps/web`, `apps/api`, `packages/db\|shared\|rag`)                                    |
+| API      | Hono 4 + Drizzle + Zod, em Cloudflare Workers                                                               |
+| Web      | React 19 + TanStack Router + Tailwind 4 + shadcn/Base UI, Worker só de assets                               |
+| Dados    | D1 `meu-gpt`, Vectorize `meu-gpt` (1024d cosine), R2 `meu-gpt-docs`                                         |
+| IA       | OpenRouter: `perplexity/pplx-embed-v1-0.6b` (1024 nativo, sem truncate) + slots de chat + rerank desligável |
 
 ## Dev local
 

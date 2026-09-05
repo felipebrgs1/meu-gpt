@@ -93,7 +93,7 @@ export function ConversationsSheet({
     }
     // slide/fade refs are stable; rendered guards the exit animation.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open ]);
+  }, [open]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -146,7 +146,10 @@ export function ConversationsSheet({
               <View key={g.label}>
                 <Text style={styles.groupLabel}>{g.label}</Text>
                 {g.items.map((c) => (
-                  <View key={c.id} style={[styles.row, c.id === activeId ? styles.rowActive : null]}>
+                  <View
+                    key={c.id}
+                    style={[styles.row, c.id === activeId ? styles.rowActive : null]}
+                  >
                     <TouchableOpacity style={styles.rowMain} onPress={() => onSelect(c.id)}>
                       <Text style={styles.rowTitle} numberOfLines={1}>
                         {c.title || "Sem título"}
@@ -161,13 +164,17 @@ export function ConversationsSheet({
             ))}
             {filtered.length === 0 && (
               <Text style={common.mutedText}>
-                {query.trim() ? "Nenhuma conversa bate com a busca." : "Nenhuma conversa ainda. Comece um novo chat."}
+                {query.trim()
+                  ? "Nenhuma conversa bate com a busca."
+                  : "Nenhuma conversa ainda. Comece um novo chat."}
               </Text>
             )}
           </ScrollView>
 
           <TouchableOpacity style={common.ghostButton} onPress={onLogout}>
-            <Text style={[common.ghostButtonText, { color: colors.danger }]}>Sair (apagar token)</Text>
+            <Text style={[common.ghostButtonText, { color: colors.danger }]}>
+              Sair (apagar token)
+            </Text>
           </TouchableOpacity>
         </Animated.View>
       </View>

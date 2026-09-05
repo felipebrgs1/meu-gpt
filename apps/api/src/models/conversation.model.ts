@@ -1,4 +1,3 @@
-import type { Env } from "../env.js";
 import type { Db } from "@meu-gpt/db";
 import { conversations, desc, eq } from "@meu-gpt/db";
 

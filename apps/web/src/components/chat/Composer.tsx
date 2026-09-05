@@ -17,7 +17,16 @@ interface Props {
 }
 
 // Composer flutuante (estilo ChatGPT): textarea + ações RAG/ingest + enviar.
-export function Composer({ input, onInput, onSend, busy, activeSlot, sourceCount, onResetSources, onOpenIngest }: Props) {
+export function Composer({
+  input,
+  onInput,
+  onSend,
+  busy,
+  activeSlot,
+  sourceCount,
+  onResetSources,
+  onOpenIngest,
+}: Props) {
   return (
     <div className="shrink-0 p-4 bg-background/80 backdrop-blur-sm">
       <div className="mx-auto max-w-3xl">
@@ -62,7 +71,9 @@ export function Composer({ input, onInput, onSend, busy, activeSlot, sourceCount
                 size="sm"
                 onClick={onResetSources}
                 className={`h-7 gap-1 px-2 text-xs transition-colors ${
-                  sourceCount ? "bg-emerald-500/15 text-emerald-400 font-medium" : "text-muted-foreground hover:text-foreground"
+                  sourceCount
+                    ? "bg-emerald-500/15 text-emerald-400 font-medium"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <DatabaseIcon className="size-3.5" />

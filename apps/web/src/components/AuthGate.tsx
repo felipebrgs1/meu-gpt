@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { OracleIcon } from "./OracleIcon";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
@@ -37,7 +44,9 @@ export function AuthGate({ onAuth }: { onAuth: () => void }) {
   }
 
   if (mustChange) {
-    return <ChangePasswordCard usernameHint={mustChange.username} currentHint={pass} onDone={onAuth} />;
+    return (
+      <ChangePasswordCard usernameHint={mustChange.username} currentHint={pass} onDone={onAuth} />
+    );
   }
 
   return (

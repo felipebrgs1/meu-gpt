@@ -4,7 +4,11 @@ import { chatRequestSchema, type Citation } from "@meu-gpt/shared";
 import { conversationModel } from "../models/conversation.model.js";
 import { messageModel } from "../models/message.model.js";
 import { documentModel } from "../models/document.model.js";
-import { openRouterChatStream, resolveSlotModel, fetchGenerationCost } from "../services/openrouter.service.js";
+import {
+  openRouterChatStream,
+  resolveSlotModel,
+  fetchGenerationCost,
+} from "../services/openrouter.service.js";
 import { ensureSystemPrompt } from "../services/system-prompt.js";
 import { retrieve, buildPrompt } from "../services/rag.service.js";
 import { sseChatResponse, pumpOpenRouterTokens } from "../views/sse.view.js";
@@ -82,7 +86,10 @@ export async function chat(c: C) {
   // markdown/tabelas/mermaid só quando agregam ao renderer do web).
   const withContext =
     ragDocs.length && lastUser
-      ? [...req.messages.slice(0, -1), { role: "user" as const, content: buildPrompt(lastUser.content, ragDocs) }]
+      ? [
+          ...req.messages.slice(0, -1),
+          { role: "user" as const, content: buildPrompt(lastUser.content, ragDocs) },
+        ]
       : req.messages;
   const llmMessages = ensureSystemPrompt(withContext);
 
@@ -98,22 +105,26 @@ export async function chat(c: C) {
       ? noop
       : (content, usage) =>
           messageModel.insert(db, {
-        id: crypto.randomUUID(),
-        conversationId,
-        role: "assistant",
-        content,
-        model,
-        tokensIn: usage.tokensIn,
-        tokensOut: usage.tokensOut,
-        latencyMs: usage.latencyMs,
-        costUsd: usage.costUsd,
-        tps: usage.tps,
-        cachedTokens: usage.cachedTokens,
-        citations,
-        createdAt: new Date().toISOString(),
-      }),
+            id: crypto.randomUUID(),
+            conversationId,
+            role: "assistant",
+            content,
+            model,
+            tokensIn: usage.tokensIn,
+            tokensOut: usage.tokensOut,
+            latencyMs: usage.latencyMs,
+            costUsd: usage.costUsd,
+            tps: usage.tps,
+            cachedTokens: usage.cachedTokens,
+            citations,
+            createdAt: new Date().toISOString(),
+          }),
     readTokens: (onToken) => pumpOpenRouterTokens(upstream, onToken),
     fetchCost: (generationId) =>
-      fetchGenerationCost({ baseUrl: env.OPENROUTER_BASE_URL, apiKey: env.OPENROUTER_API_KEY, generationId }),
+      fetchGenerationCost({
+        baseUrl: env.OPENROUTER_BASE_URL,
+        apiKey: env.OPENROUTER_API_KEY,
+        generationId,
+      }),
   });
 }

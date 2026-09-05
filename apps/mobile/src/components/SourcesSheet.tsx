@@ -24,7 +24,9 @@ export function SourcesSheet({ open, docs, sourceIds, onToggle, onReset, onClose
             </TouchableOpacity>
           </View>
           <Text style={common.mutedText}>
-            {sourceIds.length === 0 ? "Buscando em todos os documentos." : `${sourceIds.length} fonte(s) selecionada(s).`}
+            {sourceIds.length === 0
+              ? "Buscando em todos os documentos."
+              : `${sourceIds.length} fonte(s) selecionada(s).`}
           </Text>
           {docs.length === 0 ? (
             <Text style={common.mutedText}>Nenhum documento indexado ainda.</Text>
@@ -38,7 +40,8 @@ export function SourcesSheet({ open, docs, sourceIds, onToggle, onReset, onClose
                   onPress={() => onToggle(d.id)}
                 >
                   <Text style={styles.rowTitle} numberOfLines={1}>
-                    {on ? "✓ " : ""}{d.title}
+                    {on ? "✓ " : ""}
+                    {d.title}
                   </Text>
                   <Text style={styles.rowSub}>
                     {d.chunkCount} chunks{d.pageCount ? ` · ${d.pageCount} págs` : ""}
@@ -62,7 +65,13 @@ const styles = StyleSheet.create({
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   title: { color: colors.text, fontSize: 18, fontWeight: "700" },
   close: { color: colors.muted, fontSize: 14 },
-  row: { backgroundColor: colors.cardSoft, borderWidth: 1, borderColor: colors.borderSoft, borderRadius: 10, padding: spacing.sm },
+  row: {
+    backgroundColor: colors.cardSoft,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    borderRadius: 10,
+    padding: spacing.sm,
+  },
   rowActive: { borderColor: colors.accent },
   rowTitle: { color: colors.text, fontSize: 14, fontWeight: "600" },
   rowSub: { color: colors.faint, fontSize: 11, marginTop: 2 },

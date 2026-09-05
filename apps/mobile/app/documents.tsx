@@ -36,7 +36,9 @@ export default function Documents() {
         contentContainerStyle={styles.list}
         onRefresh={refresh}
         refreshing={false}
-        ListEmptyComponent={<Text style={common.mutedText}>Nenhum documento indexado. Adicione pelo ＋ no chat.</Text>}
+        ListEmptyComponent={
+          <Text style={common.mutedText}>Nenhum documento indexado. Adicione pelo ＋ no chat.</Text>
+        }
         renderItem={({ item: d }) => (
           <View style={styles.row}>
             <View style={styles.main}>
@@ -44,7 +46,8 @@ export default function Documents() {
                 {d.title}
               </Text>
               <Text style={styles.sub}>
-                {d.chunkCount} chunks{d.pageCount ? ` · ${d.pageCount} págs` : ""} · {(d.fileSize / 1024).toFixed(1)} KB
+                {d.chunkCount} chunks{d.pageCount ? ` · ${d.pageCount} págs` : ""} ·{" "}
+                {(d.fileSize / 1024).toFixed(1)} KB
               </Text>
               <Text style={styles.sub} numberOfLines={1}>
                 {d.originalFilename}

@@ -149,10 +149,16 @@ export async function ingestFile(
   try {
     extracted = await extractTextFromBuffer(opts.bytes.slice(), filename, opts.mimeType);
   } catch (e) {
-    return { ok: false, reason: `Falha ao extrair texto de ${filename}: ${e instanceof Error ? e.message : e}` };
+    return {
+      ok: false,
+      reason: `Falha ao extrair texto de ${filename}: ${e instanceof Error ? e.message : e}`,
+    };
   }
   if (!extracted.text || extracted.text.length < 10) {
-    return { ok: false, reason: `Não foi possível extrair texto de ${filename} (PDF escaneado? Use OCR na V2).` };
+    return {
+      ok: false,
+      reason: `Não foi possível extrair texto de ${filename} (PDF escaneado? Use OCR na V2).`,
+    };
   }
 
   const title = (opts.title?.trim() || filename.replace(/\.[^.]+$/, "")).slice(0, 200);
@@ -202,7 +208,10 @@ export async function ingestText(
 export async function retrieve(
   env: Env,
   opts: { query: string; topK?: number; topN?: number; minScore?: number; documentIds?: string[] },
-): Promise<{ docs: { title: string; text: string }[]; citations: { documentId: string; title: string; chunkId: string; score: number }[] }> {
+): Promise<{
+  docs: { title: string; text: string }[];
+  citations: { documentId: string; title: string; chunkId: string; score: number }[];
+}> {
   const db = createDb(env.DB);
   // Seletor de fontes: sem ids = todos os documentos.
   // Filtro é CLIENT-SIDE: derivamos o documentId do id do vetor ("{docId}#{i}").
@@ -251,7 +260,9 @@ export async function deleteDocument(
   const doc = await documentModel.get(db, docId);
   if (!doc) return { found: false };
 
-  await makeStore(env).deleteByIds?.(Array.from({ length: doc.chunkCount }, (_, i) => `${docId}#${i}`));
+  await makeStore(env).deleteByIds?.(
+    Array.from({ length: doc.chunkCount }, (_, i) => `${docId}#${i}`),
+  );
   await env.R2_BUCKET.delete(doc.r2Key);
   for (let i = 0; i < doc.chunkCount; i++) {
     await env.R2_BUCKET.delete(`chunks/${docId}#${i}.txt`);

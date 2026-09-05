@@ -17,20 +17,25 @@ export async function list(c: C) {
 
 export async function messagesOf(c: C) {
   const db = createDb(c.env.DB);
-  const rows = await messageModel.listByConversation(db, (c.req.param("id") ?? ""));
+  const rows = await messageModel.listByConversation(db, c.req.param("id") ?? "");
   return c.json(rows.map(toMessageDTO));
 }
 
 export async function create(c: C) {
   const db = createDb(c.env.DB);
   const id = crypto.randomUUID();
-  await conversationModel.create(db, { id, title: "Nova conversa", slot: "cheap", createdAt: new Date().toISOString() });
+  await conversationModel.create(db, {
+    id,
+    title: "Nova conversa",
+    slot: "cheap",
+    createdAt: new Date().toISOString(),
+  });
   return c.json({ id });
 }
 
 export async function remove(c: C) {
   const db = createDb(c.env.DB);
-  const id = (c.req.param("id") ?? "");
+  const id = c.req.param("id") ?? "";
   await messageModel.removeByConversation(db, id);
   await conversationModel.remove(db, id);
   return c.json({ ok: true });

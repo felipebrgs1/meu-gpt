@@ -52,7 +52,11 @@ export async function login(username: string, password: string): Promise<AuthInf
     body: JSON.stringify({ username, password }),
   });
   if (!res.ok) throw new Error("usuário ou senha inválidos");
-  const data = (await res.json()) as { token: string; mustChangePassword?: boolean; username?: string };
+  const data = (await res.json()) as {
+    token: string;
+    mustChangePassword?: boolean;
+    username?: string;
+  };
   localStorage.setItem("meu-gpt-token", data.token);
   return {
     token: data.token,
@@ -113,7 +117,9 @@ export async function listConversations(): Promise<Conversation[]> {
 }
 
 export async function getMessages(conversationId: string): Promise<UIMessage[]> {
-  const res = await fetch(`${API}/api/v1/conversations/${conversationId}/messages`, { headers: authHeaders() });
+  const res = await fetch(`${API}/api/v1/conversations/${conversationId}/messages`, {
+    headers: authHeaders(),
+  });
   if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) throw new Error(`messages ${res.status}`);
   const rows = (await res.json()) as {
@@ -145,12 +151,18 @@ export async function getMessages(conversationId: string): Promise<UIMessage[]> 
 }
 
 export async function deleteConversation(id: string): Promise<void> {
-  const res = await fetch(`${API}/api/v1/conversations/${id}`, { method: "DELETE", headers: authHeaders() });
+  const res = await fetch(`${API}/api/v1/conversations/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
   if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) throw new Error(`delete ${res.status}`);
 }
 
-export async function ingestDocument(title: string, text: string): Promise<{ documentId: string; chunkCount: number }> {
+export async function ingestDocument(
+  title: string,
+  text: string,
+): Promise<{ documentId: string; chunkCount: number }> {
   const res = await fetch(`${API}/api/v1/documents/ingest-text`, {
     method: "POST",
     headers: authHeaders(),
@@ -161,7 +173,10 @@ export async function ingestDocument(title: string, text: string): Promise<{ doc
   return (await res.json()) as { documentId: string; chunkCount: number };
 }
 
-export async function uploadDocument(file: File, title?: string): Promise<{ documentId: string; title: string; chunkCount: number; pageCount: number | null }> {
+export async function uploadDocument(
+  file: File,
+  title?: string,
+): Promise<{ documentId: string; title: string; chunkCount: number; pageCount: number | null }> {
   const form = new FormData();
   form.append("file", file);
   if (title?.trim()) form.append("title", title.trim());
@@ -175,7 +190,12 @@ export async function uploadDocument(file: File, title?: string): Promise<{ docu
     const j = (await res.json().catch(() => ({ error: res.statusText }))) as { error?: string };
     throw new Error(j.error ?? `upload ${res.status}`);
   }
-  return (await res.json()) as { documentId: string; title: string; chunkCount: number; pageCount: number | null };
+  return (await res.json()) as {
+    documentId: string;
+    title: string;
+    chunkCount: number;
+    pageCount: number | null;
+  };
 }
 
 export async function listDocuments(): Promise<DocRecord[]> {
@@ -186,7 +206,10 @@ export async function listDocuments(): Promise<DocRecord[]> {
 }
 
 export async function deleteDocument(id: string): Promise<void> {
-  const res = await fetch(`${API}/api/v1/documents/${id}`, { method: "DELETE", headers: authHeaders() });
+  const res = await fetch(`${API}/api/v1/documents/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
   if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) throw new Error(`delete doc ${res.status}`);
 }
@@ -197,7 +220,13 @@ export function documentRawUrl(id: string): string {
 
 export interface StreamHandlers {
   onToken: (t: string) => void;
-  onDone: (fullText: string, citations: Citation[], conversationId: string, model: string, usage: ChatUsage | null) => void;
+  onDone: (
+    fullText: string,
+    citations: Citation[],
+    conversationId: string,
+    model: string,
+    usage: ChatUsage | null,
+  ) => void;
   onError: (msg: string) => void;
 }
 
@@ -241,7 +270,13 @@ export async function streamChat(
           full += json.token as string;
           h.onToken(json.token as string);
         } else if (event === "done") {
-          h.onDone(json.fullText ?? full, json.citations ?? [], json.conversationId, json.usage?.model ?? "", (json.usage ?? null) as ChatUsage | null);
+          h.onDone(
+            json.fullText ?? full,
+            json.citations ?? [],
+            json.conversationId,
+            json.usage?.model ?? "",
+            (json.usage ?? null) as ChatUsage | null,
+          );
         } else if (event === "error") {
           h.onError(json.message);
         }

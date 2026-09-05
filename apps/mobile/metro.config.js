@@ -6,7 +6,7 @@ const config = getDefaultConfig(__dirname);
 // module "punycode", which Metro can't resolve on native. Map it to the
 // userland "punycode" package (declared in package.json dependencies).
 config.resolver.extraNodeModules = {
-  ...(config.resolver.extraNodeModules ?? {}),
+  ...config.resolver.extraNodeModules,
   punycode: require.resolve("punycode/"),
 };
 

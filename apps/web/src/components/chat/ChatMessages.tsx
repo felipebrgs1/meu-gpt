@@ -2,7 +2,18 @@ import { memo, useEffect, useId, useState, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import mermaid from "mermaid";
-import { CaretDownIcon, CheckIcon, CopyIcon, CpuIcon, CurrencyDollarIcon, DatabaseIcon, FileTextIcon, GlobeIcon, LightningIcon, SparkleIcon, StackIcon } from "@phosphor-icons/react";
+import {
+  CaretDownIcon,
+  CheckIcon,
+  CopyIcon,
+  CpuIcon,
+  CurrencyDollarIcon,
+  DatabaseIcon,
+  FileTextIcon,
+  GlobeIcon,
+  LightningIcon,
+  StackIcon,
+} from "@phosphor-icons/react";
 import { OracleIcon } from "@/components/OracleIcon";
 import type { Citation } from "@meu-gpt/shared";
 import { Badge } from "@/components/ui/badge";
@@ -59,10 +70,14 @@ function Mermaid({ code }: { code: string }) {
     return (
       <div>
         <pre className="overflow-x-auto rounded-lg border border-border/40 bg-black/60 p-3 text-[13px] leading-relaxed">
-          <span className="mb-1 block text-[11px] uppercase tracking-wider text-muted-foreground">mermaid</span>
+          <span className="mb-1 block text-[11px] uppercase tracking-wider text-muted-foreground">
+            mermaid
+          </span>
           <code>{code}</code>
         </pre>
-        <p className="mt-1 text-[11px] text-muted-foreground">não foi possível renderizar o diagrama.</p>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          não foi possível renderizar o diagrama.
+        </p>
       </div>
     );
   }
@@ -92,11 +107,17 @@ function CodeSpan({
   // Diagrama só com bloco final (fora do streaming): parcial vira código.
   if (lang === "mermaid" && renderDiagram && text.trim()) return <Mermaid code={text} />;
   if (!lang && !text.includes("\n")) {
-    return <code className="rounded bg-black/50 px-1.5 py-0.5 font-mono text-[12.5px]">{children}</code>;
+    return (
+      <code className="rounded bg-black/50 px-1.5 py-0.5 font-mono text-[12.5px]">{children}</code>
+    );
   }
   return (
     <pre className="overflow-x-auto rounded-lg border border-border/40 bg-black/60 p-3 text-[13px] leading-relaxed">
-      {lang ? <span className="mb-1 block text-[11px] uppercase tracking-wider text-muted-foreground">{lang}</span> : null}
+      {lang ? (
+        <span className="mb-1 block text-[11px] uppercase tracking-wider text-muted-foreground">
+          {lang}
+        </span>
+      ) : null}
       <code>{text}</code>
     </pre>
   );
@@ -129,18 +150,29 @@ function renderContent(content: string, msgKey: string, isStreaming: boolean) {
         remarkPlugins={[remarkGfm]}
         components={{
           p: ({ children }) => <p className="whitespace-pre-wrap">{children}</p>,
-          h1: ({ children }) => <h1 className="text-lg font-semibold tracking-tight">{children}</h1>,
-          h2: ({ children }) => <h2 className="text-[15px] font-semibold tracking-tight">{children}</h2>,
+          h1: ({ children }) => (
+            <h1 className="text-lg font-semibold tracking-tight">{children}</h1>
+          ),
+          h2: ({ children }) => (
+            <h2 className="text-[15px] font-semibold tracking-tight">{children}</h2>
+          ),
           h3: ({ children }) => <h3 className="text-sm font-semibold">{children}</h3>,
           ul: ({ children }) => <ul className="list-disc space-y-1 pl-5">{children}</ul>,
           ol: ({ children }) => <ol className="list-decimal space-y-1 pl-5">{children}</ol>,
           a: ({ href, children }) => (
-            <a href={href} target="_blank" rel="noreferrer" className="break-all text-primary underline underline-offset-2">
+            <a
+              href={href}
+              target="_blank"
+              rel="noreferrer"
+              className="break-all text-primary underline underline-offset-2"
+            >
               {children}
             </a>
           ),
           blockquote: ({ children }) => (
-            <blockquote className="border-l-2 border-primary/50 pl-3 text-muted-foreground">{children}</blockquote>
+            <blockquote className="border-l-2 border-primary/50 pl-3 text-muted-foreground">
+              {children}
+            </blockquote>
           ),
           hr: () => <hr className="border-border/40" />,
           table: ({ children }) => (
@@ -149,9 +181,15 @@ function renderContent(content: string, msgKey: string, isStreaming: boolean) {
             </div>
           ),
           th: ({ children }) => (
-            <th className="border-b border-border/50 bg-muted/40 px-2.5 py-1.5 text-left font-semibold">{children}</th>
+            <th className="border-b border-border/50 bg-muted/40 px-2.5 py-1.5 text-left font-semibold">
+              {children}
+            </th>
           ),
-          td: ({ children }) => <td className="border-b border-border/30 px-2.5 py-1.5 align-top last:border-b-0">{children}</td>,
+          td: ({ children }) => (
+            <td className="border-b border-border/30 px-2.5 py-1.5 align-top last:border-b-0">
+              {children}
+            </td>
+          ),
           pre: ({ children }) => <>{children}</>,
           code: ({ className, children }) => (
             <CodeSpan className={className} renderDiagram={!isStreaming}>
@@ -195,7 +233,8 @@ function formatCost(cost: number): string {
   return `$${cost.toPrecision(2)}`;
 }
 function formatCache(n: number): string {
-  if (n >= 1000) return `cache ${(n / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}k`;
+  if (n >= 1000)
+    return `cache ${(n / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}k`;
   return `cache ${n}`;
 }
 
@@ -204,16 +243,32 @@ function Citations({ items }: { items: Citation[] }) {
   if (!items.length) return null;
   return (
     <Collapsible open={open} onOpenChange={setOpen} className="mt-2">
-      <CollapsibleTrigger render={<Button variant="outline" size="sm" className="h-7 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground" />}>
+      <CollapsibleTrigger
+        render={
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+          />
+        }
+      >
         <FileTextIcon className="size-3.5" />
-        Fontes ({items.length}) <CaretDownIcon className={open ? "rotate-180 transition-transform" : "transition-transform"} />
+        Fontes ({items.length}){" "}
+        <CaretDownIcon
+          className={open ? "rotate-180 transition-transform" : "transition-transform"}
+        />
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-1.5">
         <div className="rounded-lg border border-border/50 bg-muted/30 p-2.5 text-xs space-y-1">
           {items.map((c) => (
-            <div key={c.chunkId} className="flex items-center justify-between gap-2 text-muted-foreground">
+            <div
+              key={c.chunkId}
+              className="flex items-center justify-between gap-2 text-muted-foreground"
+            >
               <span className="truncate font-medium text-foreground">[{c.title}]</span>
-              <span className="shrink-0 font-mono text-[11px] opacity-70">score {c.score.toFixed(3)}</span>
+              <span className="shrink-0 font-mono text-[11px] opacity-70">
+                score {c.score.toFixed(3)}
+              </span>
             </div>
           ))}
         </div>
@@ -229,7 +284,10 @@ export function ChatMessages({ log, loading, activeSlot, onQuickPrompt, copied, 
     if (loading) {
       return (
         <div className="flex-1 min-h-0 overflow-y-auto">
-          <div className="mx-auto w-full max-w-3xl px-4 py-6 space-y-5" aria-label="carregando conversa">
+          <div
+            className="mx-auto w-full max-w-3xl px-4 py-6 space-y-5"
+            aria-label="carregando conversa"
+          >
             <div className="ml-auto h-10 w-2/3 animate-pulse rounded-2xl bg-muted/50" />
             <div className="space-y-2">
               <div className="h-4 w-full animate-pulse rounded bg-muted/50" />
@@ -262,15 +320,26 @@ export function ChatMessages({ log, loading, activeSlot, onQuickPrompt, copied, 
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <Badge variant="outline" className="gap-1.5 py-1 px-3 text-xs bg-muted/40 font-normal whitespace-nowrap">
+            <Badge
+              variant="outline"
+              className="gap-1.5 py-1 px-3 text-xs bg-muted/40 font-normal whitespace-nowrap"
+            >
               <CpuIcon className="size-3.5 text-primary" />
-              <span>{activeSlot.modelName} ({activeSlot.label})</span>
+              <span>
+                {activeSlot.modelName} ({activeSlot.label})
+              </span>
             </Badge>
-            <Badge variant="outline" className="gap-1.5 py-1 px-3 text-xs bg-muted/40 font-normal whitespace-nowrap">
+            <Badge
+              variant="outline"
+              className="gap-1.5 py-1 px-3 text-xs bg-muted/40 font-normal whitespace-nowrap"
+            >
               <DatabaseIcon className="size-3.5 text-emerald-400" />
               <span>Vectorize 1024d</span>
             </Badge>
-            <Badge variant="outline" className="gap-1.5 py-1 px-3 text-xs bg-muted/40 font-normal whitespace-nowrap">
+            <Badge
+              variant="outline"
+              className="gap-1.5 py-1 px-3 text-xs bg-muted/40 font-normal whitespace-nowrap"
+            >
               <GlobeIcon className="size-3.5 text-sky-400" />
               <span>Cloudflare Workers</span>
             </Badge>
@@ -320,7 +389,13 @@ export function ChatMessages({ log, loading, activeSlot, onQuickPrompt, copied, 
                         className="max-w-[85%] rounded-2xl shadow-xs"
                       >
                         <BubbleContent className="text-sm leading-relaxed p-3.5">
-                          {<MessageBody content={m.content} msgKey={m.id} isStreaming={m.id === "streaming"} />}
+                          {
+                            <MessageBody
+                              content={m.content}
+                              msgKey={m.id}
+                              isStreaming={m.id === "streaming"}
+                            />
+                          }
                         </BubbleContent>
                       </Bubble>
                       {m.role === "assistant" && (m.model || m.content) && (
@@ -334,20 +409,32 @@ export function ChatMessages({ log, loading, activeSlot, onQuickPrompt, copied, 
                             <Badge
                               variant="outline"
                               className="text-[11px] font-mono opacity-70"
-                              title={m.tokensIn != null || m.tokensOut != null ? `tokens in ${m.tokensIn ?? "?"} · out ${m.tokensOut ?? "?"}` : undefined}
+                              title={
+                                m.tokensIn != null || m.tokensOut != null
+                                  ? `tokens in ${m.tokensIn ?? "?"} · out ${m.tokensOut ?? "?"}`
+                                  : undefined
+                              }
                             >
                               <LightningIcon className="size-3 text-amber-400" />
                               {formatTps(m.tps)}
                             </Badge>
                           )}
                           {m.costUsd != null && (
-                            <Badge variant="outline" className="text-[11px] font-mono opacity-70" title="custo da resposta (OpenRouter)">
+                            <Badge
+                              variant="outline"
+                              className="text-[11px] font-mono opacity-70"
+                              title="custo da resposta (OpenRouter)"
+                            >
                               <CurrencyDollarIcon className="size-3 text-emerald-400" />
                               {formatCost(m.costUsd)}
                             </Badge>
                           )}
                           {m.cachedTokens != null && m.cachedTokens > 0 && (
-                            <Badge variant="outline" className="text-[11px] font-mono opacity-70" title={`${m.cachedTokens} tokens do prompt reaproveitados do cache`}>
+                            <Badge
+                              variant="outline"
+                              className="text-[11px] font-mono opacity-70"
+                              title={`${m.cachedTokens} tokens do prompt reaproveitados do cache`}
+                            >
                               <StackIcon className="size-3 text-sky-400" />
                               {formatCache(m.cachedTokens)}
                             </Badge>
@@ -359,7 +446,11 @@ export function ChatMessages({ log, loading, activeSlot, onQuickPrompt, copied, 
                               className="h-6 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"
                               onClick={() => onCopy(m.id, m.content)}
                             >
-                              {copied === m.id ? <CheckIcon className="size-3 text-emerald-400" /> : <CopyIcon className="size-3" />}
+                              {copied === m.id ? (
+                                <CheckIcon className="size-3 text-emerald-400" />
+                              ) : (
+                                <CopyIcon className="size-3" />
+                              )}
                               {copied === m.id ? "copiado" : "copiar"}
                             </Button>
                           )}

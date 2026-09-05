@@ -1,4 +1,3 @@
-import type { Env } from "../env.js";
 import type { Db } from "@meu-gpt/db";
 import { messages, eq } from "@meu-gpt/db";
 import type { Citation } from "@meu-gpt/shared";
@@ -22,7 +21,11 @@ export interface NewMessage {
 // MODEL — acesso a dados de messages (D1)
 export const messageModel = {
   async listByConversation(db: Db, conversationId: string, limit = 200) {
-    return db.select().from(messages).where(eq(messages.conversationId, conversationId)).limit(limit);
+    return db
+      .select()
+      .from(messages)
+      .where(eq(messages.conversationId, conversationId))
+      .limit(limit);
   },
 
   async insert(db: Db, data: NewMessage) {

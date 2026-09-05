@@ -9,7 +9,6 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "build": "expo export --platform all",
-    "lint": "prettier --check \"app/**/*\" \"src/**/*\"",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
@@ -34,7 +33,6 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.18",
-    "babel-preset-expo": "~57.0.10",
-    "typescript": "^6.0.3"
+    "babel-preset-expo": "~57.0.10"
   }
 }

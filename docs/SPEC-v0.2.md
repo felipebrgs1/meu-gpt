@@ -7,20 +7,20 @@
 
 ## Estado atual (o que já existe)
 
-| Camada | Status |
-|---|---|
-| Turborepo (`apps/web`, `apps/api`, `packages/{db,shared,rag}`) | ✅ |
-| Stack: React 19 + Tailwind 4 + Vite 8 + shadcn/Base UI (Phosphor) | ✅ |
-| Hono 4 + Drizzle 0.45 + Zod 4 + Wrangler 4 (workers-types v5) | ✅ |
+| Camada                                                                          | Status                                             |
+| ------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Turborepo (`apps/web`, `apps/api`, `packages/{db,shared,rag}`)                  | ✅                                                 |
+| Stack: React 19 + Tailwind 4 + Vite 8 + shadcn/Base UI (Phosphor)               | ✅                                                 |
+| Hono 4 + Drizzle 0.45 + Zod 4 + Wrangler 4 (workers-types v5)                   | ✅                                                 |
 | Cloudflare: D1 `meu-gpt`, Vectorize `meu-gpt` (1024d cosine), R2 `meu-gpt-docs` | ✅ criados + migrations aplicadas (local e remote) |
-| Embedding: `perplexity/pplx-embed-v1-0.6b` via OpenRouter, 1024 nativo, float | ✅ smoke validado |
-| Chat SSE (3 slots: fast/cheap/quality), log por mensagem (model/latency) | ✅ |
-| Auth single-user (JWT `dev-token` + middleware) | ✅ |
-| Ingestão: arquivo (PDF/DOCX/TXT/MD/CSV/JSON ≤10MB) ou texto colado | ✅ |
-| Regra "original sempre no R2" (`raw/{docId}/{filename}`) | ✅ testada byte-idêntica |
-| Delete de documento (vetores + chunks + original + D1) | ✅ |
-| UI: sidebar, histórico, hero, composer, citações colapsáveis, dialog de docs | ✅ |
-| RAG e2e: ingest → retrieve → citação com score | ✅ (score 0.615 no teste) |
+| Embedding: `perplexity/pplx-embed-v1-0.6b` via OpenRouter, 1024 nativo, float   | ✅ smoke validado                                  |
+| Chat SSE (3 slots: fast/cheap/quality), log por mensagem (model/latency)        | ✅                                                 |
+| Auth single-user (JWT `dev-token` + middleware)                                 | ✅                                                 |
+| Ingestão: arquivo (PDF/DOCX/TXT/MD/CSV/JSON ≤10MB) ou texto colado              | ✅                                                 |
+| Regra "original sempre no R2" (`raw/{docId}/{filename}`)                        | ✅ testada byte-idêntica                           |
+| Delete de documento (vetores + chunks + original + D1)                          | ✅                                                 |
+| UI: sidebar, histórico, hero, composer, citações colapsáveis, dialog de docs    | ✅                                                 |
+| RAG e2e: ingest → retrieve → citação com score                                  | ✅ (score 0.615 no teste)                          |
 
 **Dívidas conhecidas:** bundle web >500KB (sem code-split), `latencyMs` logado mas tokens/custo ainda `null` (OpenRouter `stream_options.usage`), modelo `fast` depende de catálogo `:free` volátil, sem CI, sem testes automatizados, sem deploy de produção.
 
@@ -37,6 +37,7 @@
 5. `wrangler versions upload` + alias `dev/prod` (ou pelo menos `--env production`).
 
 **Critérios de aceite**
+
 - [ ] `https://meu-gpt.<subdomain>.workers.dev` responde health
 - [ ] Web em produção faz login, chat e ingest de PDF e2e
 - [ ] Ingest >10MB rejeitado com mensagem clara
@@ -54,6 +55,7 @@
 4. Fallback automático: se o modelo do slot falhar (404/deprecado como o Grok), tentar o próximo do slot e logar o evento.
 
 **Critérios de aceite**
+
 - [ ] Toda resposta assistant tem tokens in/out + custo preenchidos
 - [ ] `/usage` devolve agregação correta
 - [ ] Modelo deprecado não quebra o chat (fallback + aviso no `done`)
@@ -71,6 +73,7 @@
 4. Se recall seguir ruim: busca híbrida (FTS5 do SQLite/D1 sobre os chunks + fusão com score vetorial).
 
 **Critérios de aceite**
+
 - [ ] Com rerank on, as 20 perguntas do eval têm o doc-alvo no top-3
 - [ ] Latência p95 do retrieve < 3s
 - [ ] Eval script roda em CI (Fase 5) como gate opcional
@@ -89,6 +92,7 @@
 6. **PWA mínimo** (manifest + service worker) para "instalar" o web no celular — adia o Expo sem perder uso mobile.
 
 **Critérios de aceite**
+
 - [ ] Editar última msg → nova resposta streamando, histórico consistente
 - [ ] Conversa renomeada automaticamente com título útil
 - [ ] Busca acha mensagens antigas < 200ms
@@ -106,6 +110,7 @@
 4. Gate opcional: evals de RAG da Fase 3 rodando no PR que mexe em `packages/rag`.
 
 **Critérios de aceite**
+
 - [ ] PR sem typecheck/build verde não mergeia
 - [ ] Fixtures de PDF/DOCX pequenas no repo para os testes
 - [ ] Deploy preview comentado no PR
@@ -123,6 +128,7 @@
 
 **Pré-requisito:** Fase 1 concluída (API pública com HTTPS).
 **Critérios de aceite**
+
 - [ ] Login, chat com streaming e ingest de PDF funcionando no device
 - [ ] Token persistido em SecureStore
 - [ ] Uma única fonte de verdade de schemas (`packages/shared`) — zero duplicação
@@ -143,13 +149,13 @@ Só entrar aqui se a base crescer (>50 docs / >10MB por doc):
 
 ## Pendências em aberto (decisões suas)
 
-| # | Pendência | Impacto |
-|---|---|---|
-| 1 | Modelo do slot `fast`: hoje `minimax/MiniMax-M3:free` (funcionou no teste). Conferir estabilidade/preço do `:free` | Baixo (fallback na Fase 2 cobre) |
-| 2 | Rerank: confirmar modelo exato disponível no OpenRouter no momento (`rerank-2.5-lite` vs `3-lite`) | Fase 3 |
-| 3 | Chave da OpenRouter exposta no histórico do chat — regenerar se preferir | Segurança |
-| 4 | Domínio próprio vs `*.workers.dev` | Fase 1 |
-| 5 | Backup do D1 ( time-travel do CF cobre; definir rotina `wrangler d1 export`) | Fase 1 |
+| #   | Pendência                                                                                                          | Impacto                          |
+| --- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------- |
+| 1   | Modelo do slot `fast`: hoje `minimax/MiniMax-M3:free` (funcionou no teste). Conferir estabilidade/preço do `:free` | Baixo (fallback na Fase 2 cobre) |
+| 2   | Rerank: confirmar modelo exato disponível no OpenRouter no momento (`rerank-2.5-lite` vs `3-lite`)                 | Fase 3                           |
+| 3   | Chave da OpenRouter exposta no histórico do chat — regenerar se preferir                                           | Segurança                        |
+| 4   | Domínio próprio vs `*.workers.dev`                                                                                 | Fase 1                           |
+| 5   | Backup do D1 ( time-travel do CF cobre; definir rotina `wrangler d1 export`)                                       | Fase 1                           |
 
 ---
 

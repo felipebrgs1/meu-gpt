@@ -9,5 +9,5 @@ allowBuilds:
 overrides:
   "@cloudflare/workers-types": "5.20260905.1"
 minimumReleaseAgeExclude:
-  - '@cloudflare/workers-types@5.20260905.1'
+  - "@cloudflare/workers-types@5.20260905.1"
   - hono@4.13.7

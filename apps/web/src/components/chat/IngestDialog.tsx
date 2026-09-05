@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { DatabaseIcon, DownloadSimpleIcon, FileDocIcon, FilePdfIcon, FileTextIcon, TrashIcon, UploadSimpleIcon } from "@phosphor-icons/react";
+import {
+  DatabaseIcon,
+  DownloadSimpleIcon,
+  FileDocIcon,
+  FilePdfIcon,
+  FileTextIcon,
+  TrashIcon,
+  UploadSimpleIcon,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,8 +42,10 @@ function fmtBytes(n: number): string {
 
 function docIcon(mime: string, filename: string) {
   const f = filename.toLowerCase();
-  if (f.endsWith(".pdf") || mime.includes("pdf")) return <FilePdfIcon className="size-4 text-red-400" />;
-  if (f.endsWith(".docx") || mime.includes("wordprocessingml")) return <FileDocIcon className="size-4 text-sky-400" />;
+  if (f.endsWith(".pdf") || mime.includes("pdf"))
+    return <FilePdfIcon className="size-4 text-red-400" />;
+  if (f.endsWith(".docx") || mime.includes("wordprocessingml"))
+    return <FileDocIcon className="size-4 text-sky-400" />;
   return <FileTextIcon className="size-4 text-zinc-400" />;
 }
 
@@ -72,10 +82,13 @@ export function IngestDialog({ open, onOpenChange, onChanged }: Props) {
     setResult("");
     try {
       const r = await uploadDocument(file, title);
-      setResult(`OK: "${r.title}" indexado (${r.chunkCount} chunks${r.pageCount ? `, ${r.pageCount} páginas` : ""}). Original preservado no R2.`);
+      setResult(
+        `OK: "${r.title}" indexado (${r.chunkCount} chunks${r.pageCount ? `, ${r.pageCount} páginas` : ""}). Original preservado no R2.`,
+      );
       setFile(null);
       setTitle("");
-      (document.getElementById("doc-file") as HTMLInputElement | null) && ((document.getElementById("doc-file") as HTMLInputElement).value = "");
+      const fileInput = document.getElementById("doc-file") as HTMLInputElement | null;
+      if (fileInput) fileInput.value = "";
       void refreshDocs();
       onChanged?.();
     } catch (e) {
@@ -127,7 +140,8 @@ export function IngestDialog({ open, onOpenChange, onChanged }: Props) {
             <DialogTitle>Base de conhecimento (RAG)</DialogTitle>
           </div>
           <DialogDescription>
-            Suba PDF, DOCX ou TXT/MD. O arquivo original é preservado no R2 e o texto vai para o Vectorize (1024d cosine).
+            Suba PDF, DOCX ou TXT/MD. O arquivo original é preservado no R2 e o texto vai para o
+            Vectorize (1024d cosine).
           </DialogDescription>
         </DialogHeader>
 
@@ -161,8 +175,12 @@ export function IngestDialog({ open, onOpenChange, onChanged }: Props) {
                 </span>
               ) : (
                 <>
-                  <span className="text-sm font-medium">Arraste um arquivo ou clique para escolher</span>
-                  <span className="text-[11px] text-muted-foreground">PDF, DOCX, TXT, MD, CSV, JSON · até {MAX_MB}MB</span>
+                  <span className="text-sm font-medium">
+                    Arraste um arquivo ou clique para escolher
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    PDF, DOCX, TXT, MD, CSV, JSON · até {MAX_MB}MB
+                  </span>
                 </>
               )}
               <input
@@ -174,8 +192,15 @@ export function IngestDialog({ open, onOpenChange, onChanged }: Props) {
               />
             </label>
             <div className="space-y-1.5">
-              <Label htmlFor="doc-title-file" className="text-xs font-medium">Título (opcional — usa o nome do arquivo)</Label>
-              <Input id="doc-title-file" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Manual interno, Aula 3..." />
+              <Label htmlFor="doc-title-file" className="text-xs font-medium">
+                Título (opcional — usa o nome do arquivo)
+              </Label>
+              <Input
+                id="doc-title-file"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Ex: Manual interno, Aula 3..."
+              />
             </div>
             <Button onClick={submitFile} disabled={busy || !file} className="w-full gap-2">
               {busy ? (
@@ -192,14 +217,34 @@ export function IngestDialog({ open, onOpenChange, onChanged }: Props) {
 
           <TabsContent value="text" className="space-y-3 pt-2">
             <div className="space-y-1.5">
-              <Label htmlFor="doc-title" className="text-xs font-medium">Título do documento</Label>
-              <Input id="doc-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Resumo do Projeto, Artigo sobre RAG..." />
+              <Label htmlFor="doc-title" className="text-xs font-medium">
+                Título do documento
+              </Label>
+              <Input
+                id="doc-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Ex: Resumo do Projeto, Artigo sobre RAG..."
+              />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="doc-text" className="text-xs font-medium">Conteúdo do texto</Label>
-              <Textarea id="doc-text" value={text} onChange={(e) => setText(e.target.value)} rows={6} placeholder="Cole o texto aqui…" className="resize-none" />
+              <Label htmlFor="doc-text" className="text-xs font-medium">
+                Conteúdo do texto
+              </Label>
+              <Textarea
+                id="doc-text"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                rows={6}
+                placeholder="Cole o texto aqui…"
+                className="resize-none"
+              />
             </div>
-            <Button onClick={submitText} disabled={busy || !title.trim() || !text.trim()} className="w-full gap-2">
+            <Button
+              onClick={submitText}
+              disabled={busy || !title.trim() || !text.trim()}
+              className="w-full gap-2"
+            >
               {busy ? (
                 <>
                   <Spinner /> Indexando…
@@ -214,7 +259,9 @@ export function IngestDialog({ open, onOpenChange, onChanged }: Props) {
         </Tabs>
 
         {result && (
-          <div className={`p-2.5 rounded-lg text-xs ${result.startsWith("OK") ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-destructive/10 text-destructive"}`}>
+          <div
+            className={`p-2.5 rounded-lg text-xs ${result.startsWith("OK") ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-destructive/10 text-destructive"}`}
+          >
             {result}
           </div>
         )}
@@ -226,43 +273,53 @@ export function IngestDialog({ open, onOpenChange, onChanged }: Props) {
           </p>
           <div className="max-h-44 space-y-1 overflow-y-auto pr-1">
             {docs.map((d) => (
-              <div key={d.id} className="group flex items-center gap-2 rounded-lg border border-border/40 bg-card/50 px-2.5 py-2">
+              <div
+                key={d.id}
+                className="group flex items-center gap-2 rounded-lg border border-border/40 bg-card/50 px-2.5 py-2"
+              >
                 {docIcon(d.mimeType, d.originalFilename)}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-medium">{d.title}</p>
                   <p className="text-[10px] text-muted-foreground">
-                    {d.chunkCount} chunks{d.pageCount ? ` · ${d.pageCount} pág` : ""} · {fmtBytes(d.fileSize)}
+                    {d.chunkCount} chunks{d.pageCount ? ` · ${d.pageCount} pág` : ""} ·{" "}
+                    {fmtBytes(d.fileSize)}
                   </p>
                 </div>
                 <Tooltip>
-                  <TooltipTrigger render={
-                    <a
-                      href={documentRawUrl(d.id)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-                    >
-                      <DownloadSimpleIcon className="size-3.5" />
-                    </a>
-                  } />
+                  <TooltipTrigger
+                    render={
+                      <a
+                        href={documentRawUrl(d.id)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                      >
+                        <DownloadSimpleIcon className="size-3.5" />
+                      </a>
+                    }
+                  />
                   <TooltipContent>Baixar original (R2)</TooltipContent>
                 </Tooltip>
                 <Tooltip>
-                  <TooltipTrigger render={
-                    <button
-                      onClick={() => removeDoc(d.id)}
-                      disabled={busy}
-                      className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/15 hover:text-destructive disabled:opacity-40"
-                    >
-                      <TrashIcon className="size-3.5" />
-                    </button>
-                  } />
+                  <TooltipTrigger
+                    render={
+                      <button
+                        onClick={() => removeDoc(d.id)}
+                        disabled={busy}
+                        className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/15 hover:text-destructive disabled:opacity-40"
+                      >
+                        <TrashIcon className="size-3.5" />
+                      </button>
+                    }
+                  />
                   <TooltipContent>Excluir do RAG + R2</TooltipContent>
                 </Tooltip>
               </div>
             ))}
             {docs.length === 0 && (
-              <p className="py-3 text-center text-xs text-muted-foreground/60">Nenhum documento indexado ainda.</p>
+              <p className="py-3 text-center text-xs text-muted-foreground/60">
+                Nenhum documento indexado ainda.
+              </p>
             )}
           </div>
         </div>

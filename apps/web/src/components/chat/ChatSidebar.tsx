@@ -105,7 +105,10 @@ function ConvRow({
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <SidebarMenuAction showOnHover className="size-6 text-muted-foreground hover:text-foreground">
+            <SidebarMenuAction
+              showOnHover
+              className="size-6 text-muted-foreground hover:text-foreground"
+            >
               <DotsThreeVerticalIcon className="size-3.5" />
               <span className="sr-only">Opções</span>
             </SidebarMenuAction>
@@ -248,7 +251,11 @@ export function ChatSidebar({
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <SidebarMenuButton onClick={onNew} tooltip="Nova conversa" className="font-medium">
+                    <SidebarMenuButton
+                      onClick={onNew}
+                      tooltip="Nova conversa"
+                      className="font-medium"
+                    >
                       <PencilSimpleIcon className="size-4" />
                       <span>Novo chat</span>
                     </SidebarMenuButton>
@@ -299,7 +306,9 @@ export function ChatSidebar({
               <div className="flex flex-col items-center gap-2 px-3 py-8 text-center">
                 <ChatTextIcon className="size-6 text-muted-foreground/40" />
                 <p className="text-xs text-muted-foreground/70">
-                  {query.trim() ? "Nenhuma conversa bate com a busca." : "Nenhuma conversa ainda. Comece um novo chat."}
+                  {query.trim()
+                    ? "Nenhuma conversa bate com a busca."
+                    : "Nenhuma conversa ainda. Comece um novo chat."}
                 </p>
               </div>
             )}

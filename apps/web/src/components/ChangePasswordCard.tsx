@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { OracleIcon } from "./OracleIcon";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
@@ -78,8 +85,8 @@ export function ChangePasswordCard({
             <CardTitle className="text-xl">{BRANDING.name}</CardTitle>
           </div>
           <CardDescription>
-            Por segurança, ajuste seu usuário e troque a senha inicial antes de usar o app. A senha padrão não
-            pode ser mantida.
+            Por segurança, ajuste seu usuário e troque a senha inicial antes de usar o app. A senha
+            padrão não pode ser mantida.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">

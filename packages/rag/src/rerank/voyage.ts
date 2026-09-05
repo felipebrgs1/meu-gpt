@@ -14,7 +14,8 @@ export class VoyageReranker implements Reranker {
   ) {
     const envModel = typeof process !== "undefined" ? process.env?.RERANK_MODEL : undefined;
     // default legado: voyageai/rerank-2.5
-    const envEnabled = typeof process !== "undefined" ? process.env?.RERANK_ENABLED === "true" : false;
+    const envEnabled =
+      typeof process !== "undefined" ? process.env?.RERANK_ENABLED === "true" : false;
     const envBase = typeof process !== "undefined" ? process.env?.OPENROUTER_BASE_URL : undefined;
     this.model = opts?.model ?? envModel ?? "voyageai/rerank-2.5-lite";
     this.enabled = opts?.enabled ?? envEnabled;
@@ -42,7 +43,10 @@ export class VoyageReranker implements Reranker {
         }),
       });
       if (!res.ok) throw new Error(await res.text());
-      const json = (await res.json()) as { data?: { index: number; relevance_score: number }[]; results?: { index: number; relevance_score: number }[] };
+      const json = (await res.json()) as {
+        data?: { index: number; relevance_score: number }[];
+        results?: { index: number; relevance_score: number }[];
+      };
       const rows = json.data ?? json.results ?? [];
       return rows.map((r) => {
         const c = candidates[r.index];

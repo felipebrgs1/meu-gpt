@@ -18,7 +18,9 @@ export interface VectorMatch {
 }
 
 export interface VectorStore {
-  upsert(vectors: { id: string; values: number[]; metadata?: Record<string, unknown> }[]): Promise<void>;
+  upsert(
+    vectors: { id: string; values: number[]; metadata?: Record<string, unknown> }[],
+  ): Promise<void>;
   query(vector: number[], topK: number, filter?: Record<string, unknown>): Promise<VectorMatch[]>;
   deleteByIds?(ids: string[]): Promise<void>;
 }

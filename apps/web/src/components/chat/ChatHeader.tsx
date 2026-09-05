@@ -32,11 +32,24 @@ interface Props {
 
 // Header estilo ChatGPT: hamburger (expande/colapsa a sidebar) + nome + slot.
 // À direita: link da conversa + seletor de fontes RAG + status de stream.
-export function ChatHeader({ slot, onSlot, docs, sourceIds, onSourceIds, busy, shareable, linkCopied, onCopyLink }: Props) {
+export function ChatHeader({
+  slot,
+  onSlot,
+  docs,
+  sourceIds,
+  onSourceIds,
+  busy,
+  shareable,
+  linkCopied,
+  onCopyLink,
+}: Props) {
   return (
     <header className="flex h-13 shrink-0 items-center justify-between gap-2 border-b border-border/50 px-3">
       <div className="flex min-w-0 items-center gap-1.5">
-        <SidebarTrigger className="size-8 text-muted-foreground hover:text-foreground" title="Alternar barra lateral" />
+        <SidebarTrigger
+          className="size-8 text-muted-foreground hover:text-foreground"
+          title="Alternar barra lateral"
+        />
         <span className="hidden min-[420px]:inline text-sm font-semibold tracking-tight text-foreground/90 select-none">
           {BRANDING.name}
         </span>
@@ -51,7 +64,12 @@ export function ChatHeader({ slot, onSlot, docs, sourceIds, onSourceIds, busy, s
           className="bg-muted/40 p-0.5 rounded-lg border-border/50"
         >
           {SLOTS.map((s) => (
-            <ToggleGroupItem key={s.id} value={s.id} aria-label={s.hint} className="gap-1.5 text-xs px-2.5 py-1">
+            <ToggleGroupItem
+              key={s.id}
+              value={s.id}
+              aria-label={s.hint}
+              className="gap-1.5 text-xs px-2.5 py-1"
+            >
               <s.icon className="size-3.5" />
               <span className="font-medium">{s.label}</span>
             </ToggleGroupItem>
@@ -68,7 +86,11 @@ export function ChatHeader({ slot, onSlot, docs, sourceIds, onSourceIds, busy, s
             onClick={onCopyLink}
             title="copiar link da conversa"
           >
-            {linkCopied ? <CheckIcon className="size-3.5 text-emerald-400" /> : <LinkIcon className="size-3.5" />}
+            {linkCopied ? (
+              <CheckIcon className="size-3.5 text-emerald-400" />
+            ) : (
+              <LinkIcon className="size-3.5" />
+            )}
             {linkCopied ? "copiado" : "link"}
           </Button>
         )}
@@ -80,13 +102,19 @@ export function ChatHeader({ slot, onSlot, docs, sourceIds, onSourceIds, busy, s
                 variant="ghost"
                 size="sm"
                 className={`h-8 gap-1.5 rounded-full border px-3 text-xs ${
-                  sourceIds.length ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400 font-medium" : "border-border/60 bg-muted/30 text-muted-foreground"
+                  sourceIds.length
+                    ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400 font-medium"
+                    : "border-border/60 bg-muted/30 text-muted-foreground"
                 }`}
               />
             }
           >
             <DatabaseIcon className="size-3.5" />
-            <span>{sourceIds.length ? `${sourceIds.length} fonte${sourceIds.length > 1 ? "s" : ""}` : `RAG · ${docs.length} doc${docs.length === 1 ? "" : "s"}`}</span>
+            <span>
+              {sourceIds.length
+                ? `${sourceIds.length} fonte${sourceIds.length > 1 ? "s" : ""}`
+                : `RAG · ${docs.length} doc${docs.length === 1 ? "" : "s"}`}
+            </span>
             <CaretDownIcon className="size-3" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-72">

@@ -55,7 +55,10 @@ export async function login(c: C) {
 
 export async function status(c: C) {
   const db = createDb(c.env.DB);
-  return c.json({ mustChangePassword: await needsPasswordChange(db), username: await getEffectiveUsername(db) });
+  return c.json({
+    mustChangePassword: await needsPasswordChange(db),
+    username: await getEffectiveUsername(db),
+  });
 }
 
 export async function changeUserPassword(c: C) {
@@ -71,7 +74,12 @@ export async function changeUserPassword(c: C) {
     newUsername: parsed.data.newUsername,
   });
   if (!out.ok) {
-    const code = out.reason === "senha atual incorreta" ? 403 : out.reason.includes("indisponível") ? 500 : 400;
+    const code =
+      out.reason === "senha atual incorreta"
+        ? 403
+        : out.reason.includes("indisponível")
+          ? 500
+          : 400;
     return c.json({ error: out.reason }, code as 400 | 403 | 500);
   }
   // A sessão que trocou continua válida: devolve o token novo (as demais

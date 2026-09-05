@@ -33,7 +33,11 @@ export async function ingestUpload(c: C) {
     mimeType: file.type || "application/octet-stream",
     title,
   });
-  if (!out.ok) return c.json({ error: out.reason }, out.reason.includes("muito grande") ? 413 : out.reason.includes("Extensão") ? 400 : 422);
+  if (!out.ok)
+    return c.json(
+      { error: out.reason },
+      out.reason.includes("muito grande") ? 413 : out.reason.includes("Extensão") ? 400 : 422,
+    );
   return c.json(out.result);
 }
 
@@ -50,7 +54,7 @@ export async function ingestPaste(c: C) {
 
 export async function raw(c: C) {
   const db = createDb(c.env.DB);
-  const doc = await documentModel.get(db, (c.req.param("id") ?? ""));
+  const doc = await documentModel.get(db, c.req.param("id") ?? "");
   if (!doc) return c.json({ error: "documento não encontrado" }, 404);
   const obj = await c.env.R2_BUCKET.get(doc.r2Key);
   if (!obj) return c.json({ error: "objeto R2 ausente" }, 404);
@@ -63,7 +67,7 @@ export async function raw(c: C) {
 }
 
 export async function remove(c: C) {
-  const out = await deleteDocument(c.env, (c.req.param("id") ?? ""));
+  const out = await deleteDocument(c.env, c.req.param("id") ?? "");
   if (!out.found) return c.json({ error: "documento não encontrado" }, 404);
   return c.json({ ok: true, deletedVectors: out.deletedVectors });
 }

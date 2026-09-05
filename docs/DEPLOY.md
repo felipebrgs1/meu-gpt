@@ -246,16 +246,16 @@ VITE_API_URL="$API_URL" pnpm --filter @meu-gpt/web deploy
 
 ## 9. Troubleshooting
 
-| Sintoma | Causa provável | Ação |
-|---|---|---|
-| `wrangler dev` subiu em `:8788` em vez de `:8787` | workerd órfão ocupando a porta | `pkill -f 'workerd\|wrangler'` e subir de novo (o proxy do Vite aponta para 8787) |
-| Vectorize query não acha doc recém-ingerido | consistência eventual (segundos) | aguardar e repetir; não é bug |
-| Erro de dimensão ≠ 1024 no embed | modelo de embed trocado | abortar; conferir `EMBED_MODEL` no `.env`/`wrangler.toml`; nunca truncar |
-| `process is not defined` no Worker | `process.env` não existe no runtime | usar `typeof process !== "undefined" ? process.env?.X : undefined` (services injetam `Env`) |
-| Build web ok mas login falha (network error) | `VITE_API_URL` errada ou build sem ela | rebuildar com `VITE_API_URL` correta + redeploy |
-| CORS bloqueando a web | origin da web ≠ permitida | conferir passo 8.1 |
-| `database_id` inválido | `wrangler.toml` com id de outra conta | recriar D1 na conta atual e colar o novo id |
-| Tipos do Drizzle quebrados | duas versões de `@cloudflare/workers-types` | versão é fixada via `pnpm-workspace.yaml > overrides` — não adicionar outra |
+| Sintoma                                           | Causa provável                              | Ação                                                                                        |
+| ------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `wrangler dev` subiu em `:8788` em vez de `:8787` | workerd órfão ocupando a porta              | `pkill -f 'workerd\|wrangler'` e subir de novo (o proxy do Vite aponta para 8787)           |
+| Vectorize query não acha doc recém-ingerido       | consistência eventual (segundos)            | aguardar e repetir; não é bug                                                               |
+| Erro de dimensão ≠ 1024 no embed                  | modelo de embed trocado                     | abortar; conferir `EMBED_MODEL` no `.env`/`wrangler.toml`; nunca truncar                    |
+| `process is not defined` no Worker                | `process.env` não existe no runtime         | usar `typeof process !== "undefined" ? process.env?.X : undefined` (services injetam `Env`) |
+| Build web ok mas login falha (network error)      | `VITE_API_URL` errada ou build sem ela      | rebuildar com `VITE_API_URL` correta + redeploy                                             |
+| CORS bloqueando a web                             | origin da web ≠ permitida                   | conferir passo 8.1                                                                          |
+| `database_id` inválido                            | `wrangler.toml` com id de outra conta       | recriar D1 na conta atual e colar o novo id                                                 |
+| Tipos do Drizzle quebrados                        | duas versões de `@cloudflare/workers-types` | versão é fixada via `pnpm-workspace.yaml > overrides` — não adicionar outra                 |
 
 ---
 

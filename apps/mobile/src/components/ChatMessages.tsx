@@ -15,10 +15,26 @@ const markdownStyles = {
   bullet_list: { marginVertical: 4 },
   ordered_list: { marginVertical: 4 },
   list_item: { color: colors.text, fontSize: 14 },
-  code_inline: { backgroundColor: "#00000088", color: colors.text, fontSize: 12.5, borderRadius: 4 },
-  fence: { backgroundColor: "#00000099", borderColor: colors.border, borderWidth: 1, borderRadius: 8, padding: 8 },
+  code_inline: {
+    backgroundColor: "#00000088",
+    color: colors.text,
+    fontSize: 12.5,
+    borderRadius: 4,
+  },
+  fence: {
+    backgroundColor: "#00000099",
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 8,
+  },
   code_block: { color: colors.text, fontSize: 12.5 },
-  blockquote: { borderLeftColor: colors.primary, borderLeftWidth: 2, paddingLeft: 8, opacity: 0.85 },
+  blockquote: {
+    borderLeftColor: colors.primary,
+    borderLeftWidth: 2,
+    paddingLeft: 8,
+    opacity: 0.85,
+  },
   link: { color: colors.sky },
   table: { borderColor: colors.border, borderWidth: 1, borderRadius: 8 },
   th: { color: colors.text, fontWeight: "700" as const, padding: 6 },
@@ -41,7 +57,8 @@ function formatCost(cost: number): string {
   return `$${cost.toPrecision(2)}`;
 }
 function formatCache(n: number): string {
-  if (n >= 1000) return `cache ${(n / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}k`;
+  if (n >= 1000)
+    return `cache ${(n / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}k`;
   return `cache ${n}`;
 }
 
@@ -119,7 +136,11 @@ export function ChatMessages({ log, busy: _busy, activeSlot, onQuickPrompt, list
         </Text>
         <View style={styles.prompts}>
           {QUICK_PROMPTS.map((q) => (
-            <TouchableOpacity key={q.title} style={styles.prompt} onPress={() => onQuickPrompt(q.prompt)}>
+            <TouchableOpacity
+              key={q.title}
+              style={styles.prompt}
+              onPress={() => onQuickPrompt(q.prompt)}
+            >
               <Text style={styles.promptCat}>{q.category}</Text>
               <Text style={styles.promptTitle}>{q.title}</Text>
               <Text style={styles.promptBody} numberOfLines={2}>
@@ -140,7 +161,9 @@ export function ChatMessages({ log, busy: _busy, activeSlot, onQuickPrompt, list
       onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
       renderItem={({ item: m }) => (
         <View style={[styles.row, m.role === "user" ? styles.rowEnd : styles.rowStart]}>
-          <View style={[styles.bubble, m.role === "user" ? styles.userBubble : styles.assistantBubble]}>
+          <View
+            style={[styles.bubble, m.role === "user" ? styles.userBubble : styles.assistantBubble]}
+          >
             {m.id === "streaming" && !m.content ? (
               <Text style={styles.thinking}>pensando…</Text>
             ) : (
@@ -163,10 +186,21 @@ const styles = StyleSheet.create({
   rowStart: { alignSelf: "flex-start", alignItems: "flex-start", width: "100%" },
   bubble: { borderRadius: 14, paddingHorizontal: spacing.md, paddingVertical: 10 },
   userBubble: { backgroundColor: colors.cardSoft, borderWidth: 1, borderColor: colors.border },
-  assistantBubble: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.borderSoft, width: "100%" },
+  assistantBubble: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    width: "100%",
+  },
   thinking: { color: colors.muted, fontSize: 14 },
   cursor: { color: colors.primary, marginTop: 2 },
-  metaRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginTop: 4, alignItems: "center" },
+  metaRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginTop: 4,
+    alignItems: "center",
+  },
   meta: { color: colors.faint, fontSize: 11, fontFamily: "monospace" },
   copy: { color: colors.muted, fontSize: 12 },
   citeWrap: { marginTop: 6, width: "100%" },
@@ -182,12 +216,32 @@ const styles = StyleSheet.create({
   },
   citeTitle: { color: colors.text, fontSize: 12, fontWeight: "600", flex: 1 },
   citeScore: { color: colors.faint, fontSize: 11, fontFamily: "monospace" },
-  hero: { flex: 1, alignItems: "center", justifyContent: "center", padding: spacing.lg, gap: spacing.sm },
+  hero: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing.lg,
+    gap: spacing.sm,
+  },
   heroTitle: { color: colors.text, fontSize: 22, fontWeight: "700", textAlign: "center" },
   heroSub: { color: colors.muted, fontSize: 12, textAlign: "center" },
-  heroSlot: { color: colors.muted, fontSize: 12, borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 },
+  heroSlot: {
+    color: colors.muted,
+    fontSize: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
   prompts: { width: "100%", gap: spacing.sm, marginTop: spacing.md },
-  prompt: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.borderSoft, borderRadius: 12, padding: spacing.md },
+  prompt: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    borderRadius: 12,
+    padding: spacing.md,
+  },
   promptCat: { color: colors.faint, fontSize: 10, textTransform: "uppercase", letterSpacing: 1 },
   promptTitle: { color: colors.text, fontSize: 13, fontWeight: "700", marginTop: 2 },
   promptBody: { color: colors.muted, fontSize: 12, marginTop: 2 },

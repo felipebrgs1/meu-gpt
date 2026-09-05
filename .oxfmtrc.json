@@ -1,0 +1,11 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  // Tool-owned: nunca formatar (pnpm, drizzle-kit e o plugin do TanStack
+  // Router gerenciam o estilo desses arquivos; o formato do routeTree muda
+  // a cada dev/build).
+  "ignorePatterns": [
+    "pnpm-lock.yaml",
+    "packages/db/migrations/meta/**",
+    "apps/web/src/routeTree.gen.ts"
+  ]
+}

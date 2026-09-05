@@ -52,16 +52,16 @@ src/
 
 ## Paridade web → mobile
 
-| web | mobile |
-|---|---|
-| `ChatSidebar` | `ConversationsSheet` (bottom sheet) |
-| `ChatHeader` slot menu | `SlotPicker` + título no header |
-| `ChatHeader` fontes | `SourcesSheet` + rota `/documents` |
-| `IngestDialog` | `IngestSheet` (texto + `expo-document-picker`) |
-| `streamChat` (fetch reader) | `streamChat` (XHR progressivo, mesmos eventos) |
-| deep link `/c/:id` | estado `activeId` (sem URL no native) |
-| markdown + mermaid + GFM | markdown GFM (`mermaid` vira bloco de código — sem WebView na v1) |
-| copiar resposta | `expo-clipboard` |
+| web                         | mobile                                                            |
+| --------------------------- | ----------------------------------------------------------------- |
+| `ChatSidebar`               | `ConversationsSheet` (bottom sheet)                               |
+| `ChatHeader` slot menu      | `SlotPicker` + título no header                                   |
+| `ChatHeader` fontes         | `SourcesSheet` + rota `/documents`                                |
+| `IngestDialog`              | `IngestSheet` (texto + `expo-document-picker`)                    |
+| `streamChat` (fetch reader) | `streamChat` (XHR progressivo, mesmos eventos)                    |
+| deep link `/c/:id`          | estado `activeId` (sem URL no native)                             |
+| markdown + mermaid + GFM    | markdown GFM (`mermaid` vira bloco de código — sem WebView na v1) |
+| copiar resposta             | `expo-clipboard`                                                  |
 
 ## Teste sem rastro (regra do monorepo)
 

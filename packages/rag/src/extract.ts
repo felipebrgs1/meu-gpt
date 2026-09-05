@@ -20,7 +20,8 @@ export async function extractTextFromBuffer(
   if (lowerName.endsWith(".pdf") || lowerMime.includes("pdf")) {
     const uint8 = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
     const result = await extractText(uint8, { mergePages: true });
-    const text = typeof result.text === "string" ? result.text : (result.text as string[]).join("\n\n");
+    const text =
+      typeof result.text === "string" ? result.text : (result.text as string[]).join("\n\n");
     return {
       text: text.trim(),
       pageCount: result.totalPages,
@@ -38,7 +39,11 @@ export async function extractTextFromBuffer(
         ? buffer
         : buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
     ) as ArrayBuffer;
-    const result = await (mammoth as { extractRawText: (opts: { arrayBuffer: ArrayBuffer }) => Promise<{ value: string }> }).extractRawText({
+    const result = await (
+      mammoth as {
+        extractRawText: (opts: { arrayBuffer: ArrayBuffer }) => Promise<{ value: string }>;
+      }
+    ).extractRawText({
       arrayBuffer: ab,
     });
     return {

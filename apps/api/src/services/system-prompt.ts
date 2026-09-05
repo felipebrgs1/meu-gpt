@@ -17,7 +17,11 @@ export type ChatRoleMessage = { role: "user" | "assistant" | "system"; content: 
 
 // Garante o system prompt como primeira mensagem (preserva eventual system do cliente).
 export function ensureSystemPrompt(messages: ChatRoleMessage[]): ChatRoleMessage[] {
-  if (messages.length > 0 && messages[0].role === "system" && messages[0].content === FORMAT_SYSTEM_PROMPT) {
+  if (
+    messages.length > 0 &&
+    messages[0].role === "system" &&
+    messages[0].content === FORMAT_SYSTEM_PROMPT
+  ) {
     return messages;
   }
   return [{ role: "system" as const, content: FORMAT_SYSTEM_PROMPT }, ...messages];
