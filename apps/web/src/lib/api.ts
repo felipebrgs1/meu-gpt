@@ -1,5 +1,17 @@
 import type { Citation, Conversation } from "@meu-gpt/shared";
 
+export interface DocRecord {
+  id: string;
+  title: string;
+  r2Key: string;
+  originalFilename: string;
+  mimeType: string;
+  fileSize: number;
+  pageCount: number | null;
+  chunkCount: number;
+  createdAt: string;
+}
+
 const API = import.meta.env.VITE_API_URL ?? "";
 
 export interface UIMessage {
@@ -65,13 +77,44 @@ export async function deleteConversation(id: string): Promise<void> {
 }
 
 export async function ingestDocument(title: string, text: string): Promise<{ documentId: string; chunkCount: number }> {
-  const res = await fetch(`${API}/api/v1/documents/ingest`, {
+  const res = await fetch(`${API}/api/v1/documents/ingest-text`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify({ title, text }),
   });
   if (!res.ok) throw new Error(`ingest ${res.status}: ${await res.text()}`);
   return (await res.json()) as { documentId: string; chunkCount: number };
+}
+
+export async function uploadDocument(file: File, title?: string): Promise<{ documentId: string; title: string; chunkCount: number; pageCount: number | null }> {
+  const form = new FormData();
+  form.append("file", file);
+  if (title?.trim()) form.append("title", title.trim());
+  const res = await fetch(`${API}/api/v1/documents/ingest`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${getToken()}` },
+    body: form,
+  });
+  if (!res.ok) {
+    const j = (await res.json().catch(() => ({ error: res.statusText }))) as { error?: string };
+    throw new Error(j.error ?? `upload ${res.status}`);
+  }
+  return (await res.json()) as { documentId: string; title: string; chunkCount: number; pageCount: number | null };
+}
+
+export async function listDocuments(): Promise<DocRecord[]> {
+  const res = await fetch(`${API}/api/v1/documents`, { headers: authHeaders() });
+  if (!res.ok) throw new Error(`documents ${res.status}`);
+  return (await res.json()) as DocRecord[];
+}
+
+export async function deleteDocument(id: string): Promise<void> {
+  const res = await fetch(`${API}/api/v1/documents/${id}`, { method: "DELETE", headers: authHeaders() });
+  if (!res.ok) throw new Error(`delete doc ${res.status}`);
+}
+
+export function documentRawUrl(id: string): string {
+  return `${API}/api/v1/documents/${id}/raw`;
 }
 
 export interface StreamHandlers {

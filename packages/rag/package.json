@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@meu-gpt/shared": "workspace:*",
+    "mammoth": "^1.12.2",
+    "unpdf": "^1.8.1",
     "zod": "^4.5.4"
   },
   "devDependencies": {

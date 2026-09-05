@@ -22,12 +22,23 @@ export type ChatRequest = z.infer<typeof chatRequestSchema>;
 
 export const ingestRequestSchema = z.object({
   title: z.string().min(1).max(200),
-  // MVP: texto já extraído no client ou texto pequeno.
-  // PDF grande fica pra depois (parse assíncrono + R2).
+  // Texto puro colado (usado pelo modal "colar texto")
   text: z.string().min(1).max(200_000),
 });
 
 export type IngestRequest = z.infer<typeof ingestRequestSchema>;
+
+// Upload multipart: file (pdf/docx/txt/md) + title opcional
+export const ACCEPTED_DOC_TYPES = [
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
+  "text/markdown",
+  "application/json",
+  "text/csv",
+] as const;
+
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB — PDFs grandes ficam pra V2 (async)
 
 // Eventos SSE do chat:
 // text: { token } | done: { fullText, citations, usage } | error: { message }

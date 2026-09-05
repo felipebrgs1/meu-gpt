@@ -28,11 +28,16 @@ export const messages = sqliteTable("messages", {
   createdAt: text("created_at").notNull(),
 });
 
-// Só metadado curto. Texto do chunk vai no R2, vetor no Vectorize.
+// Só metadado curto. Texto do chunk vai no R2, vetor no Vectorize,
+// e o ARQUIVO ORIGINAL (pdf/docx/txt/md) também fica no R2 (r2Key).
 export const documents = sqliteTable("documents", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
-  r2Key: text("r2_key").notNull(),
+  r2Key: text("r2_key").notNull(), // objeto original: raw/{docId}/{filename}
+  originalFilename: text("original_filename").notNull().default(""),
+  mimeType: text("mime_type").notNull().default("text/plain"),
+  fileSize: integer("file_size").notNull().default(0), // bytes
+  pageCount: integer("page_count"), // só PDF
   chunkCount: integer("chunk_count").notNull().default(0),
   createdAt: text("created_at").notNull(),
 });

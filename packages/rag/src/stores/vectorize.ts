@@ -24,4 +24,9 @@ export class VectorizeStore implements VectorStore {
     });
     return out.matches.map((m) => ({ id: m.id, score: m.score, metadata: (m.metadata ?? {}) as Record<string, unknown> }));
   }
+
+  async deleteByIds(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+    await this.index.deleteByIds(ids);
+  }
 }

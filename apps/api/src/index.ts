@@ -3,8 +3,16 @@ import { cors } from "hono/cors";
 import { sign } from "hono/jwt";
 import { zValidator } from "@hono/zod-validator";
 import { createDb, conversations, messages, documents, eq, desc } from "@meu-gpt/db";
-import { chatRequestSchema, ingestRequestSchema } from "@meu-gpt/shared";
-import { OpenRouterEmbedding, VectorizeStore, VoyageReranker, retrieveContext, buildRagPrompt, splitText } from "@meu-gpt/rag";
+import { chatRequestSchema } from "@meu-gpt/shared";
+import {
+  OpenRouterEmbedding,
+  VectorizeStore,
+  VoyageReranker,
+  retrieveContext,
+  buildRagPrompt,
+  splitText,
+  extractTextFromBuffer,
+} from "@meu-gpt/rag";
 import type { Env } from "./env.js";
 import { singleUserAuth } from "./lib/auth.js";
 import { openRouterChatStream, resolveSlotModel } from "./lib/openrouter.js";
@@ -55,20 +63,60 @@ app.delete("/api/v1/conversations/:id", async (c) => {
   return c.json({ ok: true });
 });
 
-// ---------- ingest: md/txt/PDF pequeno síncrono ----------
-app.post("/api/v1/documents/ingest", zValidator("json", ingestRequestSchema), async (c) => {
-  const { title, text } = c.req.valid("json");
+// ---------- documents / ingest ----------
+// Regra: o ARQUIVO ORIGINAL fica no R2 (raw/{docId}/{filename}) e os chunks
+// indexados no Vectorize (texto dos chunks também no R2: chunks/{docId}#i.txt).
+const MAX_UPLOAD = 10 * 1024 * 1024; // 10MB
+const ACCEPTED_EXT = [".pdf", ".docx", ".txt", ".md", ".csv", ".json"];
+
+function safeFilename(name: string): string {
+  return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-120) || "document";
+}
+
+async function ingestFile(c: any, file: File, titleOverride?: string) {
+  const filename = safeFilename(file.name || "document");
+  const ext = filename.slice(filename.lastIndexOf(".")).toLowerCase();
+  if (!ACCEPTED_EXT.includes(ext)) {
+    return c.json({ error: `Extensão não suportada: ${ext}. Aceito: ${ACCEPTED_EXT.join(", ")}` }, 400);
+  }
+  if (file.size > MAX_UPLOAD) {
+    return c.json({ error: `Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Máximo 10MB no MVP.` }, 400);
+  }
+
   const db = createDb(c.env.DB);
   const docId = rid();
-  const r2Key = `docs/${docId}.txt`;
-  const chunks = splitText(text).slice(0, 200); // teto MVP
+  const r2Key = `raw/${docId}/${filename}`;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  // IMPORTANTE: pdf.js (unpdf) pode transferir/detach o ArrayBuffer durante a extração,
+  // zerando o buffer original. Enviamos uma CÓPIA para extração e guardamos `bytes` p/ o R2.
+  const extractBytes = bytes.slice();
 
+  // 1. Extrai texto do buffer (PDF/DOCX/TXT/MD)
+  let extracted;
+  try {
+    extracted = await extractTextFromBuffer(extractBytes, filename, file.type);
+  } catch (e) {
+    return c.json({ error: `Falha ao extrair texto de ${filename}: ${e instanceof Error ? e.message : e}` }, 422);
+  }
+  if (!extracted.text || extracted.text.length < 10) {
+    return c.json({ error: `Não foi possível extrair texto de ${filename} (PDF escaneado? Use OCR na V2).` }, 422);
+  }
+
+  const title = (titleOverride?.trim() || filename.replace(/\.[^.]+$/, "")).slice(0, 200);
+
+  // 2. Chunking + embed
+  const chunks = splitText(extracted.text).slice(0, 200);
   const embedder = new OpenRouterEmbedding(c.env.OPENROUTER_API_KEY, c.env.EMBED_MODEL, c.env.OPENROUTER_BASE_URL);
   const vecs = await embedder.embedDocuments(chunks);
   const store = new VectorizeStore(c.env.VECTORIZE);
 
-  // Texto bruto no R2 (um objeto por chunk p/ loadText simples)
-  await c.env.R2_BUCKET.put(r2Key, text, { httpMetadata: { contentType: "text/plain" } });
+  // 3. Original no R2 (regra: doc original sempre preservado)
+  await c.env.R2_BUCKET.put(r2Key, bytes, {
+    httpMetadata: { contentType: file.type || "application/octet-stream" },
+    customMetadata: { originalFilename: file.name || filename, documentId: docId, title },
+  });
+
+  // 4. Vetores no Vectorize + chunks no R2
   const vectors = vecs.map((values: number[], i: number) => ({
     id: `${docId}#${i}`,
     values,
@@ -76,12 +124,128 @@ app.post("/api/v1/documents/ingest", zValidator("json", ingestRequestSchema), as
   }));
   await store.upsert(vectors);
   for (let i = 0; i < chunks.length; i++) {
-    await c.env.R2_BUCKET.put(`chunks/${docId}#${i}.txt`, chunks[i]);
+    await c.env.R2_BUCKET.put(`chunks/${docId}#${i}.txt`, chunks[i], {
+      customMetadata: { documentId: docId, title },
+    });
+  }
+
+  // 5. Metadados no D1
+  const t = now();
+  await db.insert(documents).values({
+    id: docId,
+    title,
+    r2Key,
+    originalFilename: file.name || filename,
+    mimeType: file.type || "application/octet-stream",
+    fileSize: file.size,
+    pageCount: extracted.pageCount ?? null,
+    chunkCount: chunks.length,
+    createdAt: t,
+  });
+
+  return c.json({
+    documentId: docId,
+    title,
+    originalFilename: file.name || filename,
+    r2Key,
+    chunkCount: chunks.length,
+    pageCount: extracted.pageCount ?? null,
+    fileSize: file.size,
+  });
+}
+
+// Ingestão por texto puro colado (JSON) — mantém compat com o modal anterior
+app.post("/api/v1/documents/ingest-text", async (c) => {
+  const body = await c.req
+    .json<{ title?: string; text?: string }>()
+    .catch(() => ({}) as { title?: string; text?: string });
+  const title = (body.title ?? "").trim();
+  const text = (body.text ?? "").trim();
+  if (!title || !text) return c.json({ error: "title e text obrigatórios" }, 400);
+  if (text.length > 200_000) return c.json({ error: "texto muito grande (200k chars max)" }, 400);
+
+  const db = createDb(c.env.DB);
+  const docId = rid();
+  const r2Key = `raw/${docId}/${safeFilename(title)}.txt`;
+  const chunks = splitText(text).slice(0, 200);
+
+  const embedder = new OpenRouterEmbedding(c.env.OPENROUTER_API_KEY, c.env.EMBED_MODEL, c.env.OPENROUTER_BASE_URL);
+  const vecs = await embedder.embedDocuments(chunks);
+  const store = new VectorizeStore(c.env.VECTORIZE);
+
+  await c.env.R2_BUCKET.put(r2Key, text, { httpMetadata: { contentType: "text/plain" }, customMetadata: { documentId: docId, title } });
+  const vectors = vecs.map((values: number[], i: number) => ({
+    id: `${docId}#${i}`,
+    values,
+    metadata: { documentId: docId, title, chunkIndex: i },
+  }));
+  await store.upsert(vectors);
+  for (let i = 0; i < chunks.length; i++) {
+    await c.env.R2_BUCKET.put(`chunks/${docId}#${i}.txt`, chunks[i], { customMetadata: { documentId: docId, title } });
   }
 
   const t = now();
-  await db.insert(documents).values({ id: docId, title, r2Key, chunkCount: chunks.length, createdAt: t });
-  return c.json({ documentId: docId, chunkCount: chunks.length });
+  await db.insert(documents).values({
+    id: docId,
+    title,
+    r2Key,
+    originalFilename: `${safeFilename(title)}.txt`,
+    mimeType: "text/plain",
+    fileSize: text.length,
+    pageCount: null,
+    chunkCount: chunks.length,
+    createdAt: t,
+  });
+  return c.json({ documentId: docId, title, r2Key, chunkCount: chunks.length, fileSize: text.length });
+});
+
+// Upload multipart de arquivo (pdf/docx/txt/md)
+app.post("/api/v1/documents/ingest", async (c) => {
+  const form = await c.req.formData().catch(() => null);
+  if (!form) return c.json({ error: "multipart/form-data esperado" }, 400);
+  const file = form.get("file");
+  if (!(file instanceof File)) return c.json({ error: "campo 'file' ausente" }, 400);
+  const title = typeof form.get("title") === "string" ? (form.get("title") as string) : undefined;
+  return ingestFile(c, file, title);
+});
+
+// Lista documentos indexados
+app.get("/api/v1/documents", async (c) => {
+  const db = createDb(c.env.DB);
+  const rows = await db.select().from(documents).orderBy(desc(documents.createdAt)).limit(100);
+  return c.json(rows);
+});
+
+// Download do arquivo original direto do R2
+app.get("/api/v1/documents/:id/raw", async (c) => {
+  const db = createDb(c.env.DB);
+  const [doc] = await db.select().from(documents).where(eq(documents.id, c.req.param("id"))).limit(1);
+  if (!doc) return c.json({ error: "documento não encontrado" }, 404);
+  const obj = await c.env.R2_BUCKET.get(doc.r2Key);
+  if (!obj) return c.json({ error: "objeto R2 ausente" }, 404);
+  return new Response(obj.body, {
+    headers: {
+      "Content-Type": doc.mimeType || "application/octet-stream",
+      "Content-Disposition": `attachment; filename="${doc.originalFilename || "document"}"`,
+    },
+  });
+});
+
+// Delete: remove vetores do Vectorize + chunks + original no R2 + linha no D1
+app.delete("/api/v1/documents/:id", async (c) => {
+  const db = createDb(c.env.DB);
+  const docId = c.req.param("id");
+  const [doc] = await db.select().from(documents).where(eq(documents.id, docId)).limit(1);
+  if (!doc) return c.json({ error: "documento não encontrado" }, 404);
+
+  const store = new VectorizeStore(c.env.VECTORIZE);
+  await store.deleteByIds(Array.from({ length: doc.chunkCount }, (_, i) => `${docId}#${i}`));
+  await c.env.R2_BUCKET.delete(doc.r2Key);
+  for (let i = 0; i < doc.chunkCount; i++) {
+    await c.env.R2_BUCKET.delete(`chunks/${docId}#${i}.txt`);
+  }
+  await db.delete(documents).where(eq(documents.id, docId));
+  return c.json({ ok: true, deletedVectors: doc.chunkCount });
 });
 
 // ---------- chat SSE ----------
