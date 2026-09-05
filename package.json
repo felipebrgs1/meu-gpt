@@ -8,7 +8,10 @@
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "db:generate": "turbo db:generate",
-    "smoke:embed": "pnpm --filter @meu-gpt/rag smoke:embed"
+    "smoke:embed": "pnpm --filter @meu-gpt/rag smoke:embed",
+    "test:e2e": "node scripts/e2e-chat-test.mjs",
+    "cleanup": "node scripts/cleanup-conversations.mjs --yes",
+    "cleanup:all": "node scripts/cleanup-conversations.mjs --all --yes"
   },
   "devDependencies": {
     "turbo": "^2.10.12",

@@ -18,6 +18,8 @@ pnpm --filter @meu-gpt/web dev      # só web
 pnpm --filter @meu-gpt/db db:generate   # gera migration após mudar schema
 pnpm --filter @meu-gpt/api exec wrangler d1 migrations apply meu-gpt --local   # (ou --remote)
 pnpm --filter @meu-gpt/rag smoke:embed  # valida 1024d (precisa .env com OPENROUTER_API_KEY)
+pnpm test:e2e                         # chat ephemeral + persist→delete (exige api em :8787)
+pnpm cleanup                          # apaga conversas [E2E-TEST]/[TEST] órfãs (D1 local)
 ```
 
 ## Regras não negociáveis
@@ -28,6 +30,9 @@ pnpm --filter @meu-gpt/rag smoke:embed  # valida 1024d (precisa .env com OPENROU
 4. **Toda LLM/embed/rerank passa pelo OpenRouter** (rota `/embeddings`, `/chat/completions`, `/rerank`). Nunca chamar API de vendor direto.
 5. **Slots, não marcas:** código de negócio usa `fast|cheap|quality` e resolve via env (`CHAT_MODEL_*`). Model ids só em wrangler.toml `[vars]` / `.env`.
 6. **Mobile** (quando existir, `apps/mobile`): só via `packages/shared` — nunca importar de `apps/web`.
+7. **Teste sem rastro:** agente que testa o chat USA `ephemeral:true` (não persiste nada)
+   ou apaga no `finally` (`DELETE /api/v1/conversations/:id`). Roteiro pronto: `pnpm test:e2e`
+   (testa ephemeral + persist→delete e verifica que nada sobrou). Rastro órfão: `pnpm cleanup`.
 
 ## Arquitetura (onde mexer o quê)
 
@@ -39,7 +44,9 @@ apps/api/src/          MVC estrito:
   models/              Drizzle/D1 (conversation, message, document)
   views/               DTOs JSON (json.view) e SSE (sse.view)
   middleware/          auth (JWT single-user)
-apps/web/src/          components/ + lib/api.ts (client HTTP único)
+apps/web/src/          pages/ (uma por rota TanStack, ex: pages/ChatPage.tsx)
+  + components/chat/* (blocos: Sidebar, Header, Messages, Composer, Ingest)
+  + lib/api.ts (client HTTP único)
 packages/
   shared/              zod schemas + tipos compartilhados (web+api)
   db/                  schema Drizzle + migrations
@@ -49,6 +56,8 @@ packages/
 - Toda rota nova: criar controller + rota em `routes/index.ts`. Handler rota = 1 linha.
 - Tabela nova: schema em `packages/db` → `db:generate` → aplicar migration (local + remote).
 - Contract web↔api: schemas em `packages/shared`. Se mudar request/response, atualizar os dois lados.
+- Página nova no web: arquivo em `routes/` (file-based, ex: `routes/docs.tsx` vira `/docs`).
+  `routeTree.gen.ts` é gerado pelo plugin no build/dev — commitar junto.
 - Streaming é **SSE** com eventos `token` / `done` / `error`; citações só no `done`.
 
 ## Gotchas conhecidos (não reintroduzir)

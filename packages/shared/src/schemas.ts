@@ -16,6 +16,9 @@ export const chatRequestSchema = z.object({
   // RAG é SEMPRE ativo. Seletor de fontes: ausente/vazio = todos os documentos;
   // com ids, filtra o Vectorize por metadata documentId ($in).
   documentIds: z.array(z.string()).max(50).optional(),
+  // ephemeral: testa sem deixar rastro (não persiste conversa nem mensagens no D1).
+  // Agentes DEVEM usar ephemeral:true — ou apagar a conversa no finally (ver scripts/e2e-chat-test.mjs).
+  ephemeral: z.boolean().optional().default(false),
 });
 
 export type ChatRequest = z.infer<typeof chatRequestSchema>;

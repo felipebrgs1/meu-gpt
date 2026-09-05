@@ -1,9 +1,8 @@
-import { createRootRoute, createRoute, createRouter, RouterProvider, Outlet } from "@tanstack/react-router";
-import { Chat } from "./components/Chat";
+import { createRouter, RouterProvider } from "@tanstack/react-router";
+import { routeTree } from "./routeTree.gen";
 
-const rootRoute = createRootRoute({ component: () => <Outlet /> });
-const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: "/", component: Chat });
-const routeTree = rootRoute.addChildren([indexRoute]);
+// APP — fino: router gerado pelo plugin a partir de routes/ (file-based).
+// Nova página = novo arquivo em routes/ (ex: routes/docs.tsx vira /docs).
 const router = createRouter({ routeTree });
 
 declare module "@tanstack/react-router" {

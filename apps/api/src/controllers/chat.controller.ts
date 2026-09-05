@@ -26,14 +26,19 @@ export async function chat(c: C) {
 
   const conversationId = req.conversationId ?? crypto.randomUUID();
   const model = req.model ?? resolveSlotModel(env, req.slot);
+  const ephemeral = req.ephemeral === true;
   const t = new Date().toISOString();
 
-  await conversationModel.create(db, {
-    id: conversationId,
-    title: req.messages.at(-1)?.content.slice(0, 60) ?? "Nova conversa",
-    slot: req.slot,
-    createdAt: t,
-  });
+  // ephemeral:true = teste sem rastro: pula TODA persistência no D1
+  // (sem conversa, sem user msg, sem touch, sem assistant msg).
+  if (!ephemeral) {
+    await conversationModel.create(db, {
+      id: conversationId,
+      title: req.messages.at(-1)?.content.slice(0, 60) ?? "Nova conversa",
+      slot: req.slot,
+      createdAt: t,
+    });
+  }
 
   const lastUser = [...req.messages].reverse().find((m) => m.role === "user");
 
@@ -50,7 +55,7 @@ export async function chat(c: C) {
     }
   }
 
-  if (lastUser) {
+  if (lastUser && !ephemeral) {
     await messageModel.insert(db, {
       id: crypto.randomUUID(),
       conversationId,
@@ -73,12 +78,17 @@ export async function chat(c: C) {
       : req.messages;
 
   const upstream = await openRouterChatStream({ env, model, messages: llmMessages });
-  await conversationModel.touch(db, conversationId, new Date().toISOString());
+  if (!ephemeral) await conversationModel.touch(db, conversationId, new Date().toISOString());
+
+  // ephemeral: persistAssistant vira no-op (responde o SSE, não salva nada).
+  const noop = () => Promise.resolve();
 
   return sseChatResponse({
     meta: { conversationId, model, citations, latencyMs: Date.now() - t0 },
-    persistAssistant: (content) =>
-      messageModel.insert(db, {
+    persistAssistant: ephemeral
+      ? noop
+      : (content) =>
+          messageModel.insert(db, {
         id: crypto.randomUUID(),
         conversationId,
         role: "assistant",
