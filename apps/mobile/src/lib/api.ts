@@ -43,6 +43,12 @@ export interface PickedFile {
   mimeType: string;
 }
 
+// Upload no mobile tem dois formatos: no nativo o networking do RN entende o
+// objeto {uri, name, type}; no Expo web o FormData é o do browser — anexar o
+// objeto ali vira string "[object Object]" e o servidor responde 400
+// (campo 'file' ausente). Por isso, na web anexamos o File real do asset.
+export type UploadPayload = PickedFile | Blob;
+
 // API base URL: EXPO_PUBLIC_API_URL, inlined by babel-preset-expo at bundle
 // time. app.config.js backfills it from the monorepo-root .env (single
 // source of truth — Expo never reads the root .env on its own), so this is
@@ -156,15 +162,26 @@ export async function ingestDocument(
 }
 
 export async function uploadDocument(
-  file: PickedFile,
+  file: UploadPayload,
   title?: string,
 ): Promise<{ documentId: string; title: string; chunkCount: number; pageCount: number | null }> {
   const form = new FormData();
-  form.append("file", {
-    uri: file.uri,
-    name: file.name,
-    type: file.mimeType,
-  } as unknown as Blob);
+  if (typeof Blob !== "undefined" && file instanceof Blob) {
+    const name =
+      (typeof File !== "undefined" && file instanceof File && file.name) ||
+      title?.trim() ||
+      "document";
+    form.append("file", file, name);
+  } else {
+    const native = file as PickedFile;
+    const fallback =
+      native.uri.split("/").pop()?.split("?")[0]?.trim() || title?.trim() || "document";
+    form.append("file", {
+      uri: native.uri,
+      name: native.name?.trim() || fallback,
+      type: native.mimeType,
+    } as unknown as Blob);
+  }
   if (title?.trim()) form.append("title", title.trim());
   const res = await fetch(`${API}/api/v1/documents/ingest`, {
     method: "POST",

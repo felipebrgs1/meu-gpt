@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.15",
+    "@expo/vector-icons": "^15.1.1",
     "@meu-gpt/shared": "workspace:*",
     "expo": "~57.0.20",
     "expo-clipboard": "~57.0.1",

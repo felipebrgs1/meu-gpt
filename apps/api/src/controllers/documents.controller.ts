@@ -18,14 +18,18 @@ export async function list(c: C) {
 export async function ingestUpload(c: C) {
   const form = await c.req.formData().catch(() => null);
   if (!form) return c.json({ error: "multipart/form-data esperado" }, 400);
+  // Leniente a Blob (File estende Blob): alguns clients anexam o binário sem
+  // filename. O que não dá para aceitar é campo texto (ex: objeto
+  // stringificado "[object Object]") — aí sim o 'file' está ausente.
   const file = form.get("file");
-  if (!(file instanceof File)) return c.json({ error: "campo 'file' ausente" }, 400);
+  if (!(file instanceof Blob)) return c.json({ error: "campo 'file' ausente" }, 400);
+  const filename = file instanceof File && file.name ? file.name : "document";
   const title = typeof form.get("title") === "string" ? (form.get("title") as string) : undefined;
 
   const bytes = new Uint8Array(await file.arrayBuffer());
   const out = await ingestFile(c.env, {
     bytes,
-    filename: file.name || "document",
+    filename,
     mimeType: file.type || "application/octet-stream",
     title,
   });

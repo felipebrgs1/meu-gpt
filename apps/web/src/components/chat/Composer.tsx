@@ -19,9 +19,11 @@ interface Props {
 // Composer flutuante (estilo ChatGPT): textarea + ações RAG/ingest + enviar.
 export function Composer({ input, onInput, onSend, busy, activeSlot, sourceCount, onResetSources, onOpenIngest }: Props) {
   return (
-    <div className="shrink-0 border-t border-border/40 p-4 bg-background/80 backdrop-blur-sm">
+    <div className="shrink-0 p-4 bg-background/80 backdrop-blur-sm">
       <div className="mx-auto max-w-3xl">
-        <div className="relative flex flex-col rounded-2xl border border-border/70 bg-card p-3 shadow-sm focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+        {/* Caixa única estilo ChatGPT: bloco chapado, sem borda marcada e sem
+            highlight de foco — o bloco inteiro é a área de texto. */}
+        <div className="relative flex flex-col rounded-[26px] border border-transparent bg-muted px-4 pt-3 pb-2.5 shadow-sm">
           <Textarea
             value={input}
             onChange={(e) => onInput(e.target.value)}
@@ -33,10 +35,10 @@ export function Composer({ input, onInput, onSend, busy, activeSlot, sourceCount
             }}
             rows={2}
             placeholder={`Pergunte ao ${activeSlot.label} (${activeSlot.modelName})…`}
-            className="min-h-[50px] resize-none border-0 bg-transparent p-1 text-sm shadow-none focus-visible:ring-0 focus-visible:outline-none placeholder:text-muted-foreground/60"
+            className="min-h-[52px] resize-none border-0 bg-transparent p-1 text-[15px] leading-relaxed shadow-none focus-visible:ring-0 focus-visible:outline-none placeholder:text-muted-foreground/60"
           />
 
-          <div className="flex items-center justify-between pt-2 border-t border-border/30 mt-1">
+          <div className="flex items-center justify-between pt-1.5 mt-1">
             <div className="flex items-center gap-1.5">
               <Tooltip>
                 <TooltipTrigger
