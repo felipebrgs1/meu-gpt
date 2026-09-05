@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { login } from "../lib/api";
 import { colors, common, spacing } from "../theme";
 
@@ -28,7 +28,10 @@ export function AuthGate({ onAuth }: { onAuth: () => void }) {
   return (
     <View style={common.center}>
       <View style={styles.card}>
-        <Text style={styles.title}>meu-gpt</Text>
+        <View style={styles.brand}>
+          <Image source={require("../../assets/favicon.png")} style={styles.logo} />
+          <Text style={styles.title}>meu-gpt</Text>
+        </View>
         <Text style={common.mutedText}>Entre com seu usuário e senha.</Text>
         <Text style={styles.label}>usuário</Text>
         <TextInput
@@ -66,6 +69,8 @@ export function AuthGate({ onAuth }: { onAuth: () => void }) {
 
 const styles = StyleSheet.create({
   card: { width: "100%", maxWidth: 360, gap: spacing.sm },
+  brand: { flexDirection: "row", alignItems: "center", gap: spacing.sm, marginBottom: spacing.xs },
+  logo: { width: 32, height: 32, borderRadius: 8 },
   title: { color: colors.text, fontSize: 24, fontWeight: "700" },
   label: { color: colors.muted, fontSize: 13, marginTop: spacing.sm },
   err: { color: colors.danger, fontSize: 12 },

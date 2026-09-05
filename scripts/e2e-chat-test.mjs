@@ -107,8 +107,8 @@ async function main() {
   if (!health.ok) throw new Error(`api fora do ar (${BASE}): HTTP ${health.status} — suba com: pnpm dev`);
   console.log("[e2e] health ok");
 
-  const user = process.env.E2E_USER ?? loadEnvVar("E2E_USER") ?? "felipeb";
-  const pass = process.env.E2E_PASS ?? loadEnvVar("E2E_PASS") ?? "909090";
+  const user = process.env.E2E_USER ?? loadEnvVar("E2E_USER") ?? "user";
+  const pass = process.env.E2E_PASS ?? loadEnvVar("E2E_PASS") ?? "123456";
   const login = await req("/api/v1/auth/login", { method: "POST", body: { username: user, password: pass } });
   if (!login.ok || !login.json?.token) throw new Error(`login falhou: HTTP ${login.status} ${login.text.slice(0, 120)}`);
   const token = login.json.token;

@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import mermaid from "mermaid";
 import { CaretDown, Check, Copy, Cpu, CurrencyDollar, Database, FileText, Globe, Lightning, Sparkle, Stack } from "@phosphor-icons/react";
+import { OracleIcon } from "@/components/OracleIcon";
 import type { Citation } from "@meu-gpt/shared";
 import { Badge } from "@/components/ui/badge";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
@@ -248,7 +249,7 @@ export function ChatMessages({ log, loading, activeSlot, onQuickPrompt, copied, 
       <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-4 md:p-6 overflow-y-auto">
         <div className="w-full max-w-2xl flex flex-col items-center text-center space-y-5 animate-in fade-in-50 duration-300">
           <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 text-primary shadow-xs">
-            <Sparkle className="size-6" />
+            <OracleIcon className="size-6" />
           </div>
 
           <div className="space-y-1">

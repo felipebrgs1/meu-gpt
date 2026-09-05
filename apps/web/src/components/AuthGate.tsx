@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sparkle } from "@phosphor-icons/react";
+import { OracleIcon } from "./OracleIcon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,7 @@ export function AuthGate({ onAuth }: { onAuth: () => void }) {
         <CardHeader className="space-y-1">
           <div className="flex items-center gap-2">
             <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-              <Sparkle className="size-5" />
+              <OracleIcon className="size-5" />
             </div>
             <CardTitle className="text-xl">meu-gpt</CardTitle>
           </div>

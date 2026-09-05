@@ -31,6 +31,26 @@ export const messages = sqliteTable("messages", {
   createdAt: text("created_at").notNull(),
 });
 
+// Anti-brute-force: tentativas de login por IP. Sem isso, MemoryStore do
+// rate-limiter (por isolate) não segura nada em Workers — D1 é persistente.
+// Fail-open: se a tabela não existir, o login continua funcionando.
+// Rate limit genérico (janela fixa) em D1: mesma razão do loginAttempts —
+// MemoryStore não sobrevive entre isolates do Workers.
+// key = `rl:<nome>:<ip>:<janela>`; limpeza oportunista no rollover da janela.
+export const rateLimits = sqliteTable("rate_limits", {
+  key: text("key").primaryKey(),
+  windowStart: integer("window_start").notNull(), // epoch ms do início da janela
+  hits: integer("hits").notNull().default(1),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const loginAttempts = sqliteTable("login_attempts", {
+  ip: text("ip").primaryKey(),
+  fails: integer("fails").notNull().default(0),
+  lockedUntil: integer("locked_until"), // epoch ms; null = sem lock
+  updatedAt: text("updated_at").notNull(),
+});
+
 // Só metadado curto. Texto do chunk vai no R2, vetor no Vectorize,
 // e o ARQUIVO ORIGINAL (pdf/docx/txt/md) também fica no R2 (r2Key).
 export const documents = sqliteTable("documents", {

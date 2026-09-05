@@ -44,9 +44,25 @@ module.exports = {
     orientation: "portrait",
     userInterfaceStyle: "dark",
     newArchEnabled: true,
+    icon: "./assets/icon.png",
+    splash: {
+      image: "./assets/splash.png",
+      resizeMode: "contain",
+      backgroundColor: "#09090b",
+    },
     assetBundlePatterns: ["**/*"],
     ios: {
       supportsTablet: true,
+      icon: "./assets/icon.png",
+    },
+    android: {
+      adaptiveIcon: {
+        foregroundImage: "./assets/adaptive-icon.png",
+        backgroundColor: "#09090b",
+      },
+    },
+    web: {
+      favicon: "./assets/favicon.png",
     },
     plugins: ["expo-router", "expo-secure-store"],
     experiments: {

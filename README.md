@@ -1,34 +1,111 @@
-# meu-gpt — ChatGPT próprio (single-user, sem escala)
+# meu-gpt — ChatGPT próprio (RAG individual, self-hosted)
 
-Decisões travadas em 05/09/2026. Sem multi-tenant, sem mobile agora, sem Pi skills no commit zero.
+Chat pessoal single-user com RAG: você sobe **sua** instância na **sua** conta
+Cloudflare e conversa com seus documentos. API em Hono (Workers) + Web em
+React, embeddings/chat/rerank 100% via OpenRouter (1 key).
+
+## Como funciona
+
+```
+WEB estática (meu-gpt-web) ──HTTPS──▶ API Hono (meu-gpt-api) ──▶ OpenRouter (embed + chat + rerank)
+                                          │ bindings
+                    ┌─────────────────────┼─────────────────────┐
+                    ▼                     ▼                     ▼
+              D1 (conversas,        Vectorize (vetores    R2 (originais
+              mensagens, docs)       1024d, cosine)        + chunks)
+```
+
+- **RAG em 4 camadas por documento:** original no R2 (`raw/{docId}/{arquivo}`) +
+  chunks no R2 + vetores no Vectorize + metadado no D1. Delete remove as 4.
+- **Slots de modelo** `fast | cheap | quality` resolvidos via env — ids de modelo
+  só vivem em `wrangler.toml [vars]` / `.env`, nunca no código de negócio.
+- **Streaming SSE** com eventos `token` / `done` / `error`; citações só no `done`.
+- **Auth single-user:** usuário+senha fixos retornam um token opaco que vive em
+  secret (`SESSION_TOKEN`) — o repo pode ser público sem vazar acesso
+  (ver `apps/api/src/services/auth.service.ts`).
 
 ## Stack
 
-- Turbo `apps/web` + `apps/api` + `packages/db|shared|rag`
-- Back único Hono em Workers. Web Vite + TanStack Router. Mobile depois.
-- D1: `conversations` + `messages` + `documents` (só metadado). Texto no R2, vetor no Vectorize.
-- Embed: `perplexity/pplx-embed-v1-0.6b` via OpenRouter, 1024 nativo, cosine, float. Sem truncate.
-- Chat: 3 slots `fast|cheap|quality` + fallback manual, log `model/tokens/latency/custo` em `messages`.
-- Rerank Voyage (`voyageai/rerank-2.5`, flag `RERANK_ENABLED=false`), POST depois do Vectorize. Não Atlas.
-- SSE com citações só no evento final.
+| Peça | Tecnologia |
+|---|---|
+| Monorepo | pnpm 12 + Turborepo (`apps/web`, `apps/api`, `packages/db\|shared\|rag`) |
+| API | Hono 4 + Drizzle + Zod, em Cloudflare Workers |
+| Web | React 19 + TanStack Router + Tailwind 4 + shadcn/Base UI, Worker só de assets |
+| Dados | D1 `meu-gpt`, Vectorize `meu-gpt` (1024d cosine), R2 `meu-gpt-docs` |
+| IA | OpenRouter: `perplexity/pplx-embed-v1-0.6b` (1024 nativo, sem truncate) + slots de chat + rerank desligável |
 
-## Ordem de build
-
-1. `cp .env.example .env` + export `OPENROUTER_API_KEY`
-2. Smoke embed (trava 1024): `pnpm --filter @meu-gpt/rag smoke:embed`
-3. `npx wrangler vectorize create meu-gpt --dimensions=1024 --metric=cosine`
-4. `wrangler d1 create meu-gpt` → colar `database_id` em `apps/api/wrangler.toml`
-5. `wrangler r2 bucket create meu-gpt-docs`
-6. `pnpm install && pnpm --filter @meu-gpt/db db:generate`
-7. `cd apps/api && wrangler secret put OPENROUTER_API_KEY && wrangler secret put JWT_SECRET`
-8. Chat sem RAG → D1 histórico → ingest+RAG → web → rerank flag
-
-## Dev
+## Dev local
 
 ```bash
+cp .env.example .env        # preencha OPENROUTER_API_KEY
 pnpm install
-turbo dev
-# api: wrangler dev (8787) | web: vite (5173, proxy /api → 8787)
+pnpm --filter @meu-gpt/rag smoke:embed   # trava 1024d
+pnpm dev                    # api :8787 + web :5173 (proxy /api → 8787)
 ```
 
-Token single-user: `POST /api/v1/auth/dev-token { setupSecret: JWT_SECRET }` → salva em `localStorage meu-gpt-token`.
+Login em dev: `POST /api/v1/auth/login` com o usuário+senha de
+`apps/api/src/services/auth.service.ts` → salve o token em
+`localStorage["meu-gpt-token"]`.
+
+> Fonte única de segredos: `.env` na raiz. `apps/api/.dev.vars` é gerado
+> (`scripts/sync-env.mjs`) — nunca edite à mão.
+
+## Deploy (self-hosted na Cloudflare)
+
+Guia completo passo a passo para agentes (pré-requisitos, provisionamento
+D1/R2/Vectorize, secrets, deploy API+Web, smoke tests, troubleshooting):
+
+**→ [`docs/DEPLOY.md`](docs/DEPLOY.md)**
+
+Resumo:
+
+```bash
+# 1. Infra (uma vez por conta) — dentro de apps/api:
+wrangler vectorize create meu-gpt --dimensions=1024 --metric=cosine
+wrangler d1 create meu-gpt          # colar database_id no wrangler.toml
+wrangler r2 bucket create meu-gpt-docs
+wrangler d1 migrations apply meu-gpt --remote
+wrangler secret put OPENROUTER_API_KEY
+
+# 2. API:
+pnpm --filter @meu-gpt/api exec wrangler deploy
+
+# 3. Web (apontando para a URL da API):
+VITE_API_URL="https://meu-gpt-api.<sub>.workers.dev" pnpm --filter @meu-gpt/web deploy
+```
+
+## Estrutura
+
+```
+apps/api/src/     routes/ → controllers/ → services/ → models/ → views/ (+ middleware/)
+apps/web/src/     pages/ (uma por rota) + components/chat/* + lib/api.ts (client único)
+packages/shared/  schemas zod + tipos (contrato web↔api)
+packages/db/      schema Drizzle + migrations (db:generate após mudar schema)
+packages/rag/     chunk, extract (PDF/DOCX), embed, vectorize, rerank, pipeline
+docs/             SPEC-v0.2.md (roadmap) · DEPLOY.md (guia de deploy)
+```
+
+## Comandos
+
+```bash
+pnpm typecheck                 # todos os packages
+pnpm build                    # turbo build
+pnpm dev                      # api :8787 + web :5173
+pnpm test:e2e                 # chat ephemeral + persist→delete (api em :8787)
+pnpm cleanup                  # apaga conversas [E2E-TEST]/[TEST] órfãs
+```
+
+## Regras (resumo — vale `AGENTS.md`)
+
+1. Segredos só via `.env` → nunca commitar; nunca editar `.dev.vars`.
+2. Embedding ≠ 1024 dims → abortar, nunca truncar.
+3. Original sempre no R2 + delete nas 4 camadas.
+4. Toda LLM/embed/rerank via OpenRouter.
+5. Teste de chat usa `ephemeral:true` ou apaga no `finally`.
+
+## Referências
+
+- `docs/DEPLOY.md` — deploy self-hosted
+- `docs/SPEC-v0.2.md` — roadmap por fases
+- `AGENTS.md` — regras para agentes
+- `apps/api/wrangler.toml` / `apps/web/wrangler.toml` — bindings e vars

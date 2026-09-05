@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { Conversation } from "@meu-gpt/shared";
 import { AuthGate } from "../components/AuthGate";
@@ -186,7 +186,10 @@ export function ChatScreen() {
           <Text style={styles.headerBtnText}>☰</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => open("slot")} style={styles.headerTitle}>
-          <Text style={styles.title}>meu-gpt</Text>
+          <View style={styles.titleRow}>
+            <Image source={require("../../assets/favicon.png")} style={styles.headerIcon} />
+            <Text style={styles.title}>meu-gpt</Text>
+          </View>
           <Text style={styles.slot}>
             {activeSlot.label} · {activeSlot.modelName} ▾
           </Text>
@@ -260,6 +263,8 @@ const styles = StyleSheet.create({
   headerBtn: { width: 40, alignItems: "center" },
   headerBtnText: { color: colors.text, fontSize: 20 },
   headerTitle: { flex: 1, alignItems: "center" },
+  titleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  headerIcon: { width: 18, height: 18, borderRadius: 4 },
   title: { color: colors.text, fontSize: 16, fontWeight: "700" },
   slot: { color: colors.muted, fontSize: 11, marginTop: 1 },
   body: { flex: 1 },
