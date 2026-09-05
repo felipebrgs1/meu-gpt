@@ -124,11 +124,12 @@ export interface StreamHandlers {
 }
 
 // POST /api/v1/chat com SSE (eventos token/done/error, citações só no done)
+// RAG é sempre ativo; documentIds = seletor de fontes (ausente/vazio = todos)
 export async function streamChat(
   body: {
     slot: "fast" | "cheap" | "quality";
     messages: { role: string; content: string }[];
-    useRag: boolean;
+    documentIds?: string[];
     conversationId?: string;
   },
   h: StreamHandlers,

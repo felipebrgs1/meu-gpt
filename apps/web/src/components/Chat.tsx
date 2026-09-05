@@ -56,8 +56,12 @@ import {
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -90,7 +94,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -261,7 +264,9 @@ export function Chat() {
   const [log, setLog] = useState<UIMessage[]>([]);
   const [input, setInput] = useState("");
   const [slot, setSlot] = useState<Slot>("cheap");
-  const [useRag, setUseRag] = useState(false);
+  // RAG sempre ativo. Seletor de fontes: vazio = todos os documentos.
+  const [sourceIds, setSourceIds] = useState<string[]>([]);
+  const [docs, setDocs] = useState<DocRecord[]>([]);
   const [busy, setBusy] = useState(false);
   const [ingestOpen, setIngestOpen] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
@@ -277,7 +282,10 @@ export function Chat() {
   }
 
   useEffect(() => {
-    if (authed) void refreshConvs();
+    if (authed) {
+      void refreshConvs();
+      listDocuments().then(setDocs).catch(() => {});
+    }
   }, [authed]);
 
   async function select(id: string) {
@@ -305,38 +313,48 @@ export function Chat() {
     setLog([...history, { id: "streaming", role: "assistant", content: "" }]);
     setInput("");
     let acc = "";
-    await streamChat(
-      {
-        slot,
-        messages: history.map((m) => ({ role: m.role, content: m.content })),
-        useRag,
-        conversationId: activeId ?? undefined,
-      },
-      {
-        onToken: (t) => {
-          acc += t;
-          setLog((l) => {
-            const c = [...l];
-            c[c.length - 1] = { ...c[c.length - 1], content: acc };
-            return c;
-          });
+    const fail = (msg: string) => {
+      setLog((l) => {
+        const c = [...l];
+        c[c.length - 1] = { ...c[c.length - 1], id: crypto.randomUUID(), content: acc || `erro: ${msg}` };
+        return c;
+      });
+      setBusy(false);
+    };
+    try {
+      await streamChat(
+        {
+          slot,
+          messages: history.map((m) => ({ role: m.role, content: m.content })),
+          documentIds: sourceIds.length ? sourceIds : undefined,
+          conversationId: activeId ?? undefined,
         },
-        onDone: (full, citations, convId, model) => {
-          setLog((l) => {
-            const c = [...l];
-            c[c.length - 1] = { id: crypto.randomUUID(), role: "assistant", content: full, citations, model };
-            return c;
-          });
-          setActiveId(convId);
-          setBusy(false);
-          void refreshConvs();
+        {
+          onToken: (t) => {
+            acc += t;
+            setLog((l) => {
+              const c = [...l];
+              c[c.length - 1] = { ...c[c.length - 1], content: acc };
+              return c;
+            });
+          },
+          onDone: (full, citations, convId, model) => {
+            setLog((l) => {
+              const c = [...l];
+              c[c.length - 1] = { id: crypto.randomUUID(), role: "assistant", content: full, citations, model };
+              return c;
+            });
+            setActiveId(convId);
+            setBusy(false);
+            void refreshConvs();
+          },
+          onError: (m) => fail(m),
         },
-        onError: (m) => {
-          setLog((l) => [...l.slice(0, -1), { ...l[l.length - 1], content: acc || `erro: ${m}` }]);
-          setBusy(false);
-        },
-      },
-    );
+      );
+    } catch (e) {
+      // fetch rejeitou (API fora do ar, rede, CORS): antes travava o busy para sempre
+      fail(e instanceof Error ? e.message : "falha de rede");
+    }
   }
 
   function copy(id: string, text: string) {
@@ -443,16 +461,54 @@ export function Chat() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Label
-                className={`flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1 text-xs transition-colors ${
-                  useRag ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400 font-medium" : "border-border/60 bg-muted/30 text-muted-foreground"
-                }`}
-              >
-                <Switch checked={useRag} onCheckedChange={setUseRag} />
-                <span className="flex items-center gap-1">
-                  <Database className="size-3.5" /> RAG
-                </span>
-              </Label>
+              {/* Seletor de fontes RAG — sempre ativo */}
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`h-8 gap-1.5 rounded-full border px-3 text-xs ${
+                        sourceIds.length ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400 font-medium" : "border-border/60 bg-muted/30 text-muted-foreground"
+                      }`}
+                    />
+                  }
+                >
+                  <Database className="size-3.5" />
+                  <span>{sourceIds.length ? `${sourceIds.length} fonte${sourceIds.length > 1 ? "s" : ""}` : `RAG · ${docs.length} doc${docs.length === 1 ? "" : "s"}`}</span>
+                  <CaretDown className="size-3" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-72">
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className="text-xs text-muted-foreground">
+                      Fontes do RAG (sempre ativo)
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem
+                      onSelect={() => setSourceIds([])}
+                      className={sourceIds.length === 0 ? "bg-accent" : ""}
+                    >
+                      <Globe className="size-3.5" /> Todos os documentos
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  {docs.map((d) => (
+                    <DropdownMenuCheckboxItem
+                      key={d.id}
+                      checked={sourceIds.includes(d.id)}
+                      onCheckedChange={(checked) => {
+                        setSourceIds((ids) => (checked ? [...ids, d.id] : ids.filter((i) => i !== d.id)));
+                      }}
+                      onSelect={(e) => e.preventDefault()}
+                      className="max-w-full"
+                    >
+                      <span className="truncate">{d.title}</span>
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                  {docs.length === 0 && (
+                    <p className="px-2 py-3 text-xs text-muted-foreground">Nenhum documento indexado.</p>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
               {busy && (
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground animate-pulse">
                   <Spinner className="size-3.5" />
@@ -618,15 +674,15 @@ export function Chat() {
                     </Tooltip>
 
                     <Button
-                      variant={useRag ? "secondary" : "ghost"}
+                      variant={sourceIds.length ? "secondary" : "ghost"}
                       size="sm"
-                      onClick={() => setUseRag((r) => !r)}
+                      onClick={() => setSourceIds([])}
                       className={`h-7 gap-1 px-2 text-xs transition-colors ${
-                        useRag ? "bg-emerald-500/15 text-emerald-400 font-medium" : "text-muted-foreground hover:text-foreground"
+                        sourceIds.length ? "bg-emerald-500/15 text-emerald-400 font-medium" : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
                       <Database className="size-3.5" />
-                      <span>RAG {useRag ? "Ativo" : "Off"}</span>
+                      <span>RAG · {sourceIds.length ? `${sourceIds.length} fonte(s)` : "todos"}</span>
                     </Button>
                   </div>
 
@@ -661,7 +717,11 @@ export function Chat() {
           </div>
         </SidebarInset>
 
-        <IngestDialog open={ingestOpen} onOpenChange={setIngestOpen} />
+        <IngestDialog
+          open={ingestOpen}
+          onOpenChange={setIngestOpen}
+          onChanged={() => listDocuments().then(setDocs).catch(() => {})}
+        />
       </SidebarProvider>
     </TooltipProvider>
   );
@@ -684,7 +744,15 @@ function docIcon(mime: string, filename: string) {
   return <FileText className="size-4 text-zinc-400" />;
 }
 
-function IngestDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+function IngestDialog({
+  open,
+  onOpenChange,
+  onChanged,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onChanged?: () => void;
+}) {
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -715,6 +783,7 @@ function IngestDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v:
       setTitle("");
       (document.getElementById("doc-file") as HTMLInputElement | null) && ((document.getElementById("doc-file") as HTMLInputElement).value = "");
       void refreshDocs();
+      onChanged?.();
     } catch (e) {
       setResult(`Erro: ${e instanceof Error ? e.message : "falha"}`);
     } finally {
@@ -732,6 +801,7 @@ function IngestDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v:
       setTitle("");
       setText("");
       void refreshDocs();
+      onChanged?.();
     } catch (e) {
       setResult(`Erro: ${e instanceof Error ? e.message : "falha"}`);
     } finally {
@@ -744,6 +814,7 @@ function IngestDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v:
     try {
       await deleteDocument(id);
       void refreshDocs();
+      onChanged?.();
     } catch {
       /* noop */
     } finally {

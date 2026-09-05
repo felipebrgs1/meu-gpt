@@ -3,6 +3,7 @@ import { createDb } from "@meu-gpt/db";
 import { chatRequestSchema, type Citation } from "@meu-gpt/shared";
 import { conversationModel } from "../models/conversation.model.js";
 import { messageModel } from "../models/message.model.js";
+import { documentModel } from "../models/document.model.js";
 import { openRouterChatStream, resolveSlotModel } from "../services/openrouter.service.js";
 import { retrieve, buildPrompt } from "../services/rag.service.js";
 import { sseChatResponse, pumpOpenRouterTokens } from "../views/sse.view.js";
@@ -36,13 +37,17 @@ export async function chat(c: C) {
 
   const lastUser = [...req.messages].reverse().find((m) => m.role === "user");
 
-  // RAG: retrieve → contexto + citações
+  // RAG SEMPRE ATIVO — pula só quando não há nenhum documento indexado.
+  // Seletor de fontes: req.documentIds ausente/vazio = todos os docs.
   let ragDocs: { title: string; text: string }[] = [];
   let citations: Citation[] = [];
-  if (req.useRag && lastUser) {
-    const out = await retrieve(env, { query: lastUser.content });
-    ragDocs = out.docs;
-    citations = out.citations;
+  if (lastUser) {
+    const dbDocs = await documentModel.list(db, 1);
+    if (dbDocs.length > 0) {
+      const out = await retrieve(env, { query: lastUser.content, documentIds: req.documentIds });
+      ragDocs = out.docs;
+      citations = out.citations;
+    }
   }
 
   if (lastUser) {

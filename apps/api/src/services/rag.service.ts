@@ -195,24 +195,33 @@ export async function ingestText(
   });
 }
 
-// Retrieve RAG: embed da query → Vectorize top-k → rerank → top-N
+// Retrieve RAG (sempre ativo): embed da query → Vectorize top-k (com filtro
+// opcional de documentIds) → rerank → top-N
 export async function retrieve(
   env: Env,
-  opts: { query: string; topK?: number; topN?: number },
+  opts: { query: string; topK?: number; topN?: number; documentIds?: string[] },
 ): Promise<{ docs: { title: string; text: string }[]; citations: { documentId: string; title: string; chunkId: string; score: number }[] }> {
   const db = createDb(env.DB);
+  // Seletor de fontes: sem ids = todos os documentos.
+  // Filtro é CLIENT-SIDE: derivamos o documentId do id do vetor ("{docId}#{i}").
+  // (metadata filter do Vectorize ($in) não é confiável via remote binding)
+  const ids = opts.documentIds?.length ? opts.documentIds : undefined;
+  const topK = opts.topK ?? Number(env.RAG_TOPK ?? 20);
+  // Com seletor ativo, buscamos mais wide para não perder chunks do doc alvo.
+  const effectiveTopK = ids ? Math.max(topK, 50) : topK;
   const ranked = await retrieveContext({
     query: opts.query,
     embedder: makeEmbedder(env),
     store: makeStore(env),
     reranker: makeReranker(env),
-    topK: opts.topK ?? Number(env.RAG_TOPK ?? 20),
+    topK: effectiveTopK,
     topN: opts.topN ?? Number(env.RERANK_TOPN ?? 5),
     loadText: async (id: string) => {
+      const [documentId] = id.split("#");
+      if (ids && !ids.includes(documentId)) return null;
       const obj = await env.R2_BUCKET.get(`chunks/${id}.txt`);
       if (!obj) return null;
       const text = await obj.text();
-      const [documentId] = id.split("#");
       const doc = await db.select().from(documents).where(eq(documents.id, documentId)).limit(1);
       return { text, documentId, title: doc[0]?.title ?? documentId };
     },

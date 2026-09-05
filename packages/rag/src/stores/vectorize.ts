@@ -19,7 +19,8 @@ export class VectorizeStore implements VectorStore {
     if (vector.length !== 1024) throw new Error(`query dim ${vector.length} ≠ 1024`);
     const out = await this.index.query(vector, {
       topK,
-      filter: filter as unknown as Record<string, string | number | boolean> | undefined,
+      // filtros suportados: igualdade e operadores ($in etc.) sobre metadata
+      filter: filter as never,
       returnMetadata: "all",
     });
     return out.matches.map((m) => ({ id: m.id, score: m.score, metadata: (m.metadata ?? {}) as Record<string, unknown> }));

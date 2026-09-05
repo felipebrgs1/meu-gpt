@@ -13,9 +13,9 @@ export const chatRequestSchema = z.object({
   // model override explícito (debug). Se ausente, resolve via slot.
   model: z.string().min(1).max(120).optional(),
   messages: z.array(chatMessageSchema).min(1).max(100),
-  // RAG
-  documentIds: z.array(z.string()).max(20).optional(),
-  useRag: z.boolean().default(false),
+  // RAG é SEMPRE ativo. Seletor de fontes: ausente/vazio = todos os documentos;
+  // com ids, filtra o Vectorize por metadata documentId ($in).
+  documentIds: z.array(z.string()).max(50).optional(),
 });
 
 export type ChatRequest = z.infer<typeof chatRequestSchema>;
