@@ -82,6 +82,11 @@ module.exports = {
       icon: branding.mobile.icon,
     },
     android: {
+      package: "com.felipeb.meugpt",
+      versionCode: 1,
+      // LAN dev usa http://192.168.x.x — sem isso o Android 9+ bloqueia.
+      // Quando a API tiver https público, pode remover esta linha.
+      usesCleartextTraffic: true,
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: branding.background,
