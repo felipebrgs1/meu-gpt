@@ -13,6 +13,7 @@ export interface Env {
   RERANK_MODEL: string;
   RAG_TOPK: string;
   RERANK_TOPN: string;
+  RAG_MIN_SCORE?: string;
   SINGLE_USER_ID: string;
   OPENROUTER_BASE_URL?: string;
 }

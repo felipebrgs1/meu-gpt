@@ -24,6 +24,9 @@ export const messages = sqliteTable("messages", {
   tokensOut: integer("tokens_out"),
   latencyMs: integer("latency_ms"),
   costUsd: real("cost_usd"),
+  // Decode speed (tokens/s) and prompt-cache hits reported by OpenRouter.
+  tps: real("tps"),
+  cachedTokens: integer("cached_tokens"),
   citationsJson: text("citations_json"),
   createdAt: text("created_at").notNull(),
 });

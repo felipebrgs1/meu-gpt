@@ -4,7 +4,8 @@ import { chatRequestSchema, type Citation } from "@meu-gpt/shared";
 import { conversationModel } from "../models/conversation.model.js";
 import { messageModel } from "../models/message.model.js";
 import { documentModel } from "../models/document.model.js";
-import { openRouterChatStream, resolveSlotModel } from "../services/openrouter.service.js";
+import { openRouterChatStream, resolveSlotModel, fetchGenerationCost } from "../services/openrouter.service.js";
+import { ensureSystemPrompt } from "../services/system-prompt.js";
 import { retrieve, buildPrompt } from "../services/rag.service.js";
 import { sseChatResponse, pumpOpenRouterTokens } from "../views/sse.view.js";
 import type { Env } from "../env.js";
@@ -42,7 +43,9 @@ export async function chat(c: C) {
 
   const lastUser = [...req.messages].reverse().find((m) => m.role === "user");
 
-  // RAG SEMPRE ATIVO — pula só quando não há nenhum documento indexado.
+  // RAG SEMPRE ATIVO com corte de relevância — pula quando não há docs ou
+  // quando nenhum chunk passa do minScore (pergunta fora dos docs cai no
+  // conhecimento geral via prompt híbrido, sem citar fonte).
   // Seletor de fontes: req.documentIds ausente/vazio = todos os docs.
   let ragDocs: { title: string; text: string }[] = [];
   let citations: Citation[] = [];
@@ -66,41 +69,51 @@ export async function chat(c: C) {
       tokensOut: null,
       latencyMs: null,
       costUsd: null,
+      tps: null,
+      cachedTokens: null,
       citations: null,
       createdAt: t,
     });
   }
 
-  // Injeta o contexto RAG na última mensagem do usuário
-  const llmMessages =
+  // Injeta o contexto RAG na última mensagem do usuário (prompt híbrido).
+  // Sem docs relevantes, manda a pergunta pura: modelo responde geral avisando.
+  // System prompt de formatação sempre em primeiro (texto puro por padrão,
+  // markdown/tabelas/mermaid só quando agregam ao renderer do web).
+  const withContext =
     ragDocs.length && lastUser
       ? [...req.messages.slice(0, -1), { role: "user" as const, content: buildPrompt(lastUser.content, ragDocs) }]
       : req.messages;
+  const llmMessages = ensureSystemPrompt(withContext);
 
   const upstream = await openRouterChatStream({ env, model, messages: llmMessages });
   if (!ephemeral) await conversationModel.touch(db, conversationId, new Date().toISOString());
 
   // ephemeral: persistAssistant vira no-op (responde o SSE, não salva nada).
-  const noop = () => Promise.resolve();
+  const noop = (_content: string, _usage: object) => Promise.resolve();
 
   return sseChatResponse({
-    meta: { conversationId, model, citations, latencyMs: Date.now() - t0 },
+    meta: { conversationId, model, citations, startedAt: t0 },
     persistAssistant: ephemeral
       ? noop
-      : (content) =>
+      : (content, usage) =>
           messageModel.insert(db, {
         id: crypto.randomUUID(),
         conversationId,
         role: "assistant",
         content,
         model,
-        tokensIn: null,
-        tokensOut: null,
-        latencyMs: Date.now() - t0,
-        costUsd: null,
+        tokensIn: usage.tokensIn,
+        tokensOut: usage.tokensOut,
+        latencyMs: usage.latencyMs,
+        costUsd: usage.costUsd,
+        tps: usage.tps,
+        cachedTokens: usage.cachedTokens,
         citations,
         createdAt: new Date().toISOString(),
       }),
     readTokens: (onToken) => pumpOpenRouterTokens(upstream, onToken),
+    fetchCost: (generationId) =>
+      fetchGenerationCost({ baseUrl: env.OPENROUTER_BASE_URL, apiKey: env.OPENROUTER_API_KEY, generationId }),
   });
 }

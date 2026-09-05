@@ -1,4 +1,4 @@
-import type { Citation, Conversation } from "@meu-gpt/shared";
+import type { ChatUsage, Citation, Conversation } from "@meu-gpt/shared";
 
 export interface DocRecord {
   id: string;
@@ -20,6 +20,13 @@ export interface UIMessage {
   content: string;
   model?: string | null;
   citations?: Citation[];
+  // Usage da resposta (live via SSE ou histórico via D1); null = sem dados.
+  tokensIn?: number | null;
+  tokensOut?: number | null;
+  latencyMs?: number | null;
+  tps?: number | null;
+  costUsd?: number | null;
+  cachedTokens?: number | null;
 }
 
 export function getToken(): string {
@@ -60,6 +67,12 @@ export async function getMessages(conversationId: string): Promise<UIMessage[]> 
     role: string;
     content: string;
     model: string | null;
+    tokensIn: number | null;
+    tokensOut: number | null;
+    latencyMs: number | null;
+    tps: number | null;
+    costUsd: number | null;
+    cachedTokens: number | null;
     citationsJson: string | null;
   }[];
   return rows.map((r) => ({
@@ -67,6 +80,12 @@ export async function getMessages(conversationId: string): Promise<UIMessage[]> 
     role: r.role as UIMessage["role"],
     content: r.content,
     model: r.model,
+    tokensIn: r.tokensIn,
+    tokensOut: r.tokensOut,
+    latencyMs: r.latencyMs,
+    tps: r.tps,
+    costUsd: r.costUsd,
+    cachedTokens: r.cachedTokens,
     citations: r.citationsJson ? (JSON.parse(r.citationsJson) as Citation[]) : [],
   }));
 }
@@ -119,7 +138,7 @@ export function documentRawUrl(id: string): string {
 
 export interface StreamHandlers {
   onToken: (t: string) => void;
-  onDone: (fullText: string, citations: Citation[], conversationId: string, model: string) => void;
+  onDone: (fullText: string, citations: Citation[], conversationId: string, model: string, usage: ChatUsage | null) => void;
   onError: (msg: string) => void;
 }
 
@@ -163,7 +182,7 @@ export async function streamChat(
           full += json.token as string;
           h.onToken(json.token as string);
         } else if (event === "done") {
-          h.onDone(json.fullText ?? full, json.citations ?? [], json.conversationId, json.usage?.model ?? "");
+          h.onDone(json.fullText ?? full, json.citations ?? [], json.conversationId, json.usage?.model ?? "", (json.usage ?? null) as ChatUsage | null);
         } else if (event === "error") {
           h.onError(json.message);
         }

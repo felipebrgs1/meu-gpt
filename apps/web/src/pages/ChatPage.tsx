@@ -104,10 +104,22 @@ export function ChatPage() {
               return c;
             });
           },
-          onDone: (full, citations, convId, model) => {
+          onDone: (full, citations, convId, model, usage) => {
             setLog((l) => {
               const c = [...l];
-              c[c.length - 1] = { id: crypto.randomUUID(), role: "assistant", content: full, citations, model };
+              c[c.length - 1] = {
+                id: crypto.randomUUID(),
+                role: "assistant",
+                content: full,
+                citations,
+                model,
+                tokensIn: usage?.tokensIn ?? null,
+                tokensOut: usage?.tokensOut ?? null,
+                latencyMs: usage?.latencyMs ?? null,
+                tps: usage?.tps ?? null,
+                costUsd: usage?.costUsd ?? null,
+                cachedTokens: usage?.cachedTokens ?? null,
+              };
               return c;
             });
             setActiveId(convId);

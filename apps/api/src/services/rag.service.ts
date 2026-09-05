@@ -196,10 +196,12 @@ export async function ingestText(
 }
 
 // Retrieve RAG (sempre ativo): embed da query → Vectorize top-k (com filtro
-// opcional de documentIds) → rerank → top-N
+// opcional de documentIds) → rerank → top-N com corte de relevância
+// (minScore). Sem hits relevantes, devolve vazio e o chat cai no
+// conhecimento geral (prompt híbrido).
 export async function retrieve(
   env: Env,
-  opts: { query: string; topK?: number; topN?: number; documentIds?: string[] },
+  opts: { query: string; topK?: number; topN?: number; minScore?: number; documentIds?: string[] },
 ): Promise<{ docs: { title: string; text: string }[]; citations: { documentId: string; title: string; chunkId: string; score: number }[] }> {
   const db = createDb(env.DB);
   // Seletor de fontes: sem ids = todos os documentos.
@@ -207,6 +209,8 @@ export async function retrieve(
   // (metadata filter do Vectorize ($in) não é confiável via remote binding)
   const ids = opts.documentIds?.length ? opts.documentIds : undefined;
   const topK = opts.topK ?? Number(env.RAG_TOPK ?? 20);
+  const rawMin = Number(env.RAG_MIN_SCORE ?? 0.5);
+  const minScore = opts.minScore ?? (Number.isFinite(rawMin) ? rawMin : 0.5);
   // Com seletor ativo, buscamos mais wide para não perder chunks do doc alvo.
   const effectiveTopK = ids ? Math.max(topK, 50) : topK;
   const ranked = await retrieveContext({
@@ -216,6 +220,7 @@ export async function retrieve(
     reranker: makeReranker(env),
     topK: effectiveTopK,
     topN: opts.topN ?? Number(env.RERANK_TOPN ?? 5),
+    minScore,
     loadText: async (id: string) => {
       const [documentId] = id.split("#");
       if (ids && !ids.includes(documentId)) return null;

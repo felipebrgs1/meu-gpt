@@ -25,6 +25,8 @@ export interface MessageDTO {
   tokensOut: number | null;
   latencyMs: number | null;
   costUsd: number | null;
+  tps: number | null;
+  cachedTokens: number | null;
   citations: Citation[];
   createdAt: string;
 }
@@ -46,6 +48,8 @@ export function toMessageDTO(row: MessageRow): MessageDTO {
     tokensOut: row.tokensOut,
     latencyMs: row.latencyMs,
     costUsd: row.costUsd,
+    tps: row.tps,
+    cachedTokens: row.cachedTokens,
     citations,
     createdAt: row.createdAt,
   };

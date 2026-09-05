@@ -13,6 +13,8 @@ export interface NewMessage {
   tokensOut: number | null;
   latencyMs: number | null;
   costUsd: number | null;
+  tps: number | null;
+  cachedTokens: number | null;
   citations: Citation[] | null;
   createdAt: string;
 }
@@ -34,6 +36,8 @@ export const messageModel = {
       tokensOut: data.tokensOut,
       latencyMs: data.latencyMs,
       costUsd: data.costUsd,
+      tps: data.tps,
+      cachedTokens: data.cachedTokens,
       citationsJson: data.citations ? JSON.stringify(data.citations) : null,
       createdAt: data.createdAt,
     });

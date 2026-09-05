@@ -1,5 +1,8 @@
-import { useState } from "react";
-import { CaretDown, Check, Copy, Cpu, Database, FileText, Globe, Sparkle } from "@phosphor-icons/react";
+import { useEffect, useId, useState, type ReactNode } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import mermaid from "mermaid";
+import { CaretDown, Check, Copy, Cpu, CurrencyDollar, Database, FileText, Globe, Lightning, Sparkle, Stack } from "@phosphor-icons/react";
 import type { Citation } from "@meu-gpt/shared";
 import { Badge } from "@/components/ui/badge";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
@@ -27,29 +30,133 @@ interface Props {
   onCopy: (id: string, text: string) => void;
 }
 
-// Render mínimo: blocos ```code``` viram <pre>, resto é texto com quebras.
-function renderContent(content: string, msgKey: string) {
-  const parts = content.split(/```(\w*)\n?([\s\S]*?)```/g);
-  if (parts.length === 1) return <p className="whitespace-pre-wrap break-words">{content}</p>;
-  const out = [];
-  for (let i = 0; i < parts.length; i += 3) {
-    if (parts[i]) {
-      out.push(
-        <p key={`${msgKey}-t${i}`} className="whitespace-pre-wrap break-words">
-          {parts[i]}
-        </p>,
-      );
-    }
-    if (i + 2 < parts.length && (parts[i + 1] !== undefined || parts[i + 2])) {
-      out.push(
-        <pre key={`${msgKey}-c${i}`} className="my-2 overflow-x-auto rounded-lg bg-black/60 p-3 text-[13px] leading-relaxed border border-border/40">
-          {parts[i + 1] ? <span className="mb-1 block text-[11px] uppercase tracking-wider text-muted-foreground">{parts[i + 1]}</span> : null}
-          <code>{parts[i + 2]}</code>
-        </pre>,
-      );
-    }
+mermaid.initialize({ startOnLoad: false, theme: "dark" });
+
+// Bloco ```mermaid vira diagrama SVG. Erro de sintaxe ou stream parcial:
+// cai para o visual de código com aviso (nunca quebra a mensagem).
+function Mermaid({ code }: { code: string }) {
+  const [svg, setSvg] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  const rawId = useId();
+  useEffect(() => {
+    let alive = true;
+    setSvg(null);
+    setFailed(false);
+    mermaid
+      .render(`mmd-${rawId.replace(/[^a-zA-Z0-9]/g, "")}`, code)
+      .then(({ svg }) => {
+        if (alive) setSvg(svg);
+      })
+      .catch(() => {
+        if (alive) setFailed(true);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [code, rawId]);
+  if (failed) {
+    return (
+      <div>
+        <pre className="overflow-x-auto rounded-lg border border-border/40 bg-black/60 p-3 text-[13px] leading-relaxed">
+          <span className="mb-1 block text-[11px] uppercase tracking-wider text-muted-foreground">mermaid</span>
+          <code>{code}</code>
+        </pre>
+        <p className="mt-1 text-[11px] text-muted-foreground">não foi possível renderizar o diagrama.</p>
+      </div>
+    );
   }
-  return <>{out}</>;
+  if (!svg) return <p className="text-muted-foreground">renderizando diagrama…</p>;
+  return (
+    <div
+      className="overflow-x-auto rounded-lg border border-border/40 bg-muted/20 p-3 [&_svg]:mx-auto [&_svg]:h-auto [&_svg]:max-w-full"
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  );
+}
+
+// Render markdown (GFM: tabelas, listas, autolinks, ```code```).
+// Sem HTML cru de propósito: react-markdown ignora tags sem rehype-raw (anti-XSS).
+// Bloco de código mantém o visual atual (<pre> escuro + label da linguagem).
+function CodeSpan({
+  className,
+  children,
+  renderDiagram,
+}: {
+  className?: string;
+  children?: ReactNode;
+  renderDiagram: boolean;
+}) {
+  const text = String(children ?? "").replace(/\n$/, "");
+  const lang = /language-([\w-]+)/.exec(className ?? "")?.[1];
+  // Diagrama só com bloco final (fora do streaming): parcial vira código.
+  if (lang === "mermaid" && renderDiagram && text.trim()) return <Mermaid code={text} />;
+  if (!lang && !text.includes("\n")) {
+    return <code className="rounded bg-black/50 px-1.5 py-0.5 font-mono text-[12.5px]">{children}</code>;
+  }
+  return (
+    <pre className="overflow-x-auto rounded-lg border border-border/40 bg-black/60 p-3 text-[13px] leading-relaxed">
+      {lang ? <span className="mb-1 block text-[11px] uppercase tracking-wider text-muted-foreground">{lang}</span> : null}
+      <code>{text}</code>
+    </pre>
+  );
+}
+
+function renderContent(content: string, msgKey: string, isStreaming: boolean) {
+  return (
+    <div key={msgKey} className="space-y-2 break-words">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          p: ({ children }) => <p className="whitespace-pre-wrap">{children}</p>,
+          h1: ({ children }) => <h1 className="text-lg font-semibold tracking-tight">{children}</h1>,
+          h2: ({ children }) => <h2 className="text-[15px] font-semibold tracking-tight">{children}</h2>,
+          h3: ({ children }) => <h3 className="text-sm font-semibold">{children}</h3>,
+          ul: ({ children }) => <ul className="list-disc space-y-1 pl-5">{children}</ul>,
+          ol: ({ children }) => <ol className="list-decimal space-y-1 pl-5">{children}</ol>,
+          a: ({ href, children }) => (
+            <a href={href} target="_blank" rel="noreferrer" className="break-all text-primary underline underline-offset-2">
+              {children}
+            </a>
+          ),
+          blockquote: ({ children }) => (
+            <blockquote className="border-l-2 border-primary/50 pl-3 text-muted-foreground">{children}</blockquote>
+          ),
+          hr: () => <hr className="border-border/40" />,
+          table: ({ children }) => (
+            <div className="overflow-x-auto rounded-lg border border-border/40">
+              <table className="w-full border-collapse text-[13px]">{children}</table>
+            </div>
+          ),
+          th: ({ children }) => (
+            <th className="border-b border-border/50 bg-muted/40 px-2.5 py-1.5 text-left font-semibold">{children}</th>
+          ),
+          td: ({ children }) => <td className="border-b border-border/30 px-2.5 py-1.5 align-top last:border-b-0">{children}</td>,
+          pre: ({ children }) => <>{children}</>,
+          code: ({ className, children }) => (
+            <CodeSpan className={className} renderDiagram={!isStreaming}>
+              {children}
+            </CodeSpan>
+          ),
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
+// Formatação PT-BR dos badges de usage (tps, custo, cache hit).
+function formatTps(tps: number): string {
+  return `${tps.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} t/s`;
+}
+function formatCost(cost: number): string {
+  if (cost >= 1) return `$${cost.toFixed(2)}`;
+  if (cost >= 0.01) return `$${cost.toFixed(3)}`;
+  return `$${cost.toPrecision(2)}`;
+}
+function formatCache(n: number): string {
+  if (n >= 1000) return `cache ${(n / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}k`;
+  return `cache ${n}`;
 }
 
 function Citations({ items }: { items: Citation[] }) {
@@ -153,7 +260,7 @@ export function ChatMessages({ log, busy, activeSlot, onQuickPrompt, copied, onC
                         className="max-w-[85%] rounded-2xl shadow-xs"
                       >
                         <BubbleContent className="text-sm leading-relaxed p-3.5">
-                          {renderContent(m.content || (busy && m.id === "streaming" ? "▍" : ""), m.id)}
+                          {renderContent(m.content || (busy && m.id === "streaming" ? "▍" : ""), m.id, m.id === "streaming")}
                         </BubbleContent>
                       </Bubble>
                       {m.role === "assistant" && (m.model || m.content) && (
@@ -161,6 +268,28 @@ export function ChatMessages({ log, busy, activeSlot, onQuickPrompt, copied, onC
                           {m.model && (
                             <Badge variant="outline" className="text-[11px] font-mono opacity-70">
                               {m.model}
+                            </Badge>
+                          )}
+                          {m.tps != null && (
+                            <Badge
+                              variant="outline"
+                              className="text-[11px] font-mono opacity-70"
+                              title={m.tokensIn != null || m.tokensOut != null ? `tokens in ${m.tokensIn ?? "?"} · out ${m.tokensOut ?? "?"}` : undefined}
+                            >
+                              <Lightning className="size-3 text-amber-400" />
+                              {formatTps(m.tps)}
+                            </Badge>
+                          )}
+                          {m.costUsd != null && (
+                            <Badge variant="outline" className="text-[11px] font-mono opacity-70" title="custo da resposta (OpenRouter)">
+                              <CurrencyDollar className="size-3 text-emerald-400" />
+                              {formatCost(m.costUsd)}
+                            </Badge>
+                          )}
+                          {m.cachedTokens != null && m.cachedTokens > 0 && (
+                            <Badge variant="outline" className="text-[11px] font-mono opacity-70" title={`${m.cachedTokens} tokens do prompt reaproveitados do cache`}>
+                              <Stack className="size-3 text-sky-400" />
+                              {formatCache(m.cachedTokens)}
                             </Badge>
                           )}
                           {m.content && m.id !== "streaming" && (

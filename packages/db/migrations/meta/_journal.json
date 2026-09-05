@@ -15,6 +15,13 @@
       "when": 1788624732974,
       "tag": "0001_married_punisher",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1788628957570,
+      "tag": "0002_bright_gorgon",
+      "breakpoints": true
     }
   ]
 }

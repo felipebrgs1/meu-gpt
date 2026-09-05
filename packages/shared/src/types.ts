@@ -19,8 +19,23 @@ export interface Message {
   tokensOut: number | null;
   latencyMs: number | null;
   costUsd: number | null;
+  tps: number | null;
+  cachedTokens: number | null;
   citations: Citation[] | null;
   createdAt: string;
+}
+
+// Usage anexado ao evento SSE `done` e persistido no log da mensagem.
+// tps = tokens de saída por segundo (janela de decode); cachedTokens = hits
+// de prompt-cache reportados pelo provider via OpenRouter (null = sem info).
+export interface ChatUsage {
+  model: string;
+  latencyMs: number;
+  tokensIn: number | null;
+  tokensOut: number | null;
+  tps: number | null;
+  costUsd: number | null;
+  cachedTokens: number | null;
 }
 
 export interface DocMeta {

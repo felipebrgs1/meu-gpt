@@ -12,6 +12,7 @@ RERANK_ENABLED = "false"
 RERANK_MODEL = "nvidia/llama-nemotron-rerank-vl-1b-v2:free"
 RAG_TOPK = "20"
 RERANK_TOPN = "5"
+RAG_MIN_SCORE = "0.5"
 SINGLE_USER_ID = "me"
 
 # npx wrangler vectorize create meu-gpt --dimensions=1024 --metric=cosine
