@@ -7,7 +7,7 @@ account_id = "78fedbeba68de80a823e65652da5f2c5" # pessoal (Felipeborgacogame). T
 EMBED_MODEL = "perplexity/pplx-embed-v1-0.6b"
 CHAT_MODEL_FAST = "minimax/MiniMax-M3:free"
 CHAT_MODEL_CHEAP = "z-ai/glm-5.3-flash"
-CHAT_MODEL_QUALITY = "z-ai/glm-5.3-flash"
+CHAT_MODEL_QUALITY = "meta/muse-spark-1.3-contributor"
 RERANK_ENABLED = "false"
 RERANK_MODEL = "nvidia/llama-nemotron-rerank-vl-1b-v2:free"
 RAG_TOPK = "20"
@@ -34,4 +34,3 @@ bucket_name = "meu-gpt-docs"
 # Segredos (nunca commitar, nunca pôr em [vars]):
 #   wrangler secret put OPENROUTER_API_KEY
 #   wrangler secret put SESSION_TOKEN   (token opaco do /auth/login; gere com: openssl rand -hex 32)
-#   wrangler secret put VOYAGE_API_KEY  (opcional, só se o rerank exigir)

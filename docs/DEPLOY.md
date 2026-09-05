@@ -129,18 +129,16 @@ npx wrangler secret put OPENROUTER_API_KEY   # cola a mesma key do .env
 # Obrigatório (token opaco devolvido pelo /auth/login — é o que autoriza o Bearer):
 npx wrangler secret put SESSION_TOKEN        # gere com: openssl rand -hex 32
 
-# Opcional (só se RERANK_ENABLED=true e o modelo de rerank exigir):
-# npx wrangler secret put VOYAGE_API_KEY
-
 npx wrangler secret list   # confere: OPENROUTER_API_KEY presente
 cd ../..
 ```
 
-> Auth do app: usuário fixo (`LOGIN_USER=user` em
-> `apps/api/src/services/auth.service.ts`) + senha mutável em D1 (tabela
-> `auth_state`, hash SHA-256 com salt). A senha inicial é `123456` e a 1ª sessão
-> OBRIGA a troca (`POST /api/v1/auth/change-password`, mín. 8 chars) — enquanto
-> não trocar, a API barra tudo com 403 `password_change_required`. O token de
+> Auth do app: usuário + senha mutáveis em D1 (tabela `auth_state`, hash
+> SHA-256 com salt). A credencial inicial é `user` / `123456` e a 1ª sessão
+> OBRIGA a troca (`POST /api/v1/auth/change-password` com `newPassword` e/ou
+> `newUsername`; só a troca de senha quita a obrigação) — enquanto não trocar,
+> a API barra tudo com 403 `password_change_required`. Depois, a troca segue
+> disponível na web em Conta (sidebar). O token de
 > sessão vem de secret (`SESSION_TOKEN`) — o repo pode ser público sem vazar acesso.
 > Para resetar ao default (dev): `DELETE FROM auth_state;` no D1 local/remoto.
 > Para rotacionar o acesso sem trocar a senha: gere um novo `SESSION_TOKEN`
@@ -220,11 +218,11 @@ VITE_API_URL="$API_URL" pnpm --filter @meu-gpt/web deploy
 
 ## 8. Pós-deploy: hardening mínimo
 
-0. **TROQUE A SENHA PADRÃO (obrigatório e automático).** O repo sai com `user` / `123456`.
-   Na 1ª sessão a web exige a troca (mín. 8 chars, diferente da inicial) e a API
+0. **TROQUE A CREDENCIAL PADRÃO (obrigatório e automático).** O repo sai com `user` / `123456`.
+   Na 1ª sessão a web exige o ajuste (usuário editável + senha nova mín. 8 chars) e a API
    bloqueia chat/docs/conversas com 403 `password_change_required` até concluir.
    Via curl: login → `POST /api/v1/auth/change-password` com o Bearer.
-   Confirme que o login antigo (`123456`) retorna 403 após a troca.
+   Confirme que a credencial antiga retorna 403 após a troca.
    Opcional: rotacione também o `SESSION_TOKEN` (`openssl rand -hex 32`).
 1. **CORS:** hoje a API usa `cors()` aberto (`app.use("*", cors())` em
    `apps/api/src/index.ts`). Trave `origin` para o domínio da web antes de

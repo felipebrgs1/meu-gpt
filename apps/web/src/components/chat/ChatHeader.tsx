@@ -1,4 +1,4 @@
-import { CaretDown, Check, Database, Globe, Link } from "@phosphor-icons/react";
+import { CaretDownIcon, CheckIcon, DatabaseIcon, GlobeIcon, LinkIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { BRANDING } from "../../branding.gen.js";
 import {
@@ -68,7 +68,7 @@ export function ChatHeader({ slot, onSlot, docs, sourceIds, onSourceIds, busy, s
             onClick={onCopyLink}
             title="copiar link da conversa"
           >
-            {linkCopied ? <Check className="size-3.5 text-emerald-400" /> : <Link className="size-3.5" />}
+            {linkCopied ? <CheckIcon className="size-3.5 text-emerald-400" /> : <LinkIcon className="size-3.5" />}
             {linkCopied ? "copiado" : "link"}
           </Button>
         )}
@@ -85,9 +85,9 @@ export function ChatHeader({ slot, onSlot, docs, sourceIds, onSourceIds, busy, s
               />
             }
           >
-            <Database className="size-3.5" />
+            <DatabaseIcon className="size-3.5" />
             <span>{sourceIds.length ? `${sourceIds.length} fonte${sourceIds.length > 1 ? "s" : ""}` : `RAG · ${docs.length} doc${docs.length === 1 ? "" : "s"}`}</span>
-            <CaretDown className="size-3" />
+            <CaretDownIcon className="size-3" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-72">
             <DropdownMenuGroup>
@@ -98,7 +98,7 @@ export function ChatHeader({ slot, onSlot, docs, sourceIds, onSourceIds, busy, s
                 onSelect={() => onSourceIds([])}
                 className={sourceIds.length === 0 ? "bg-accent" : ""}
               >
-                <Globe className="size-3.5" /> Todos os documentos
+                <GlobeIcon className="size-3.5" /> Todos os documentos
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

@@ -41,7 +41,7 @@ export function makeStore(env: Env) {
 }
 
 export function makeReranker(env: Env) {
-  return new VoyageReranker(env.VOYAGE_API_KEY ?? env.OPENROUTER_API_KEY, {
+  return new VoyageReranker(env.OPENROUTER_API_KEY, {
     model: env.RERANK_MODEL,
     enabled: env.RERANK_ENABLED === "true",
     baseUrl: env.OPENROUTER_BASE_URL,

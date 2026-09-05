@@ -1,20 +1,22 @@
 import type { Db } from "@meu-gpt/db";
 import { authModel } from "../models/auth.model.js";
 
-// SERVICE — auth single-user (usuário fixo + senha mutável em D1).
+// SERVICE — auth single-user (usuário + senha mutáveis em D1).
 // Primeira sessão usa a credencial default abaixo e o login responde
 // mustChangePassword=true; enquanto a troca não acontece, o middleware
 // bloqueia tudo com 403 password_change_required. Após a troca, o default
-// deixa de valer — só o hash em D1 autentica.
+// deixa de valer — só username + hash em D1 autenticam.
 // O token de sessão NÃO é hardcoded: vem de secret (SESSION_TOKEN via Env).
 // Repo pode ser público — o token de cada instância vive só nos secrets.
 
 // Default inicial — só vale enquanto não houver linha em auth_state.
-// Depois da primeira troca, essa senha nunca mais autentica.
+// Depois da primeira troca, essa credencial nunca mais autentica.
 export const LOGIN_USER = "user";
 const LOGIN_PASS_DEFAULT = "123456";
 
 export const MIN_PASSWORD_LEN = 8;
+export const MIN_USERNAME_LEN = 2;
+export const MAX_USERNAME_LEN = 50;
 
 function toHex(bytes: ArrayBuffer | Uint8Array): string {
   const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
@@ -55,19 +57,26 @@ async function readState(db: Db) {
   }
 }
 
-// True se ainda está na credencial default (sem troca registrada).
+// Username efetivo: customizado em D1 ou o default inicial.
+export async function getEffectiveUsername(db: Db): Promise<string> {
+  const row = await readState(db);
+  return row?.username ?? LOGIN_USER;
+}
+
+// True se ainda está na credencial default (sem troca de senha registrada).
 export async function needsPasswordChange(db: Db): Promise<boolean> {
   const row = await readState(db);
   if (!row) return true;
   return row.mustChange === 1;
 }
 
-// Valida credencial: com troca feita, só o hash vale; sem troca, só o default.
+// Valida credencial: com troca feita, só username + hash em D1 valem;
+// sem troca, só o default.
 export async function verifyCredentials(db: Db, username: unknown, password: unknown): Promise<boolean> {
   if (typeof username !== "string" || typeof password !== "string") return false;
-  if (username !== LOGIN_USER) return false;
   const row = await readState(db);
-  if (!row) return safeEqual(password, LOGIN_PASS_DEFAULT);
+  if (!row) return username.trim() === LOGIN_USER && safeEqual(password, LOGIN_PASS_DEFAULT);
+  if (username.trim() !== row.username) return false;
   const hash = await hashPassword(password, row.passwordSalt);
   return safeEqual(hash, row.passwordHash);
 }
@@ -75,6 +84,19 @@ export async function verifyCredentials(db: Db, username: unknown, password: unk
 // Compat: usado onde só importa "é o default?" (nunca para autenticar pós-troca).
 export function checkLogin(username: unknown, password: unknown): boolean {
   return username === LOGIN_USER && password === LOGIN_PASS_DEFAULT;
+}
+
+// Regras do novo usuário: aparado, 2–50 chars.
+export function validateNewUsername(newUsername: unknown, currentUsername: unknown): string | null {
+  if (typeof newUsername !== "string") return "novo usuário inválido";
+  const name = newUsername.trim();
+  if (!name) return "novo usuário obrigatório";
+  if (name.length < MIN_USERNAME_LEN) return `usuário precisa de ao menos ${MIN_USERNAME_LEN} caracteres`;
+  if (name.length > MAX_USERNAME_LEN) return "usuário muito longo (50 chars max)";
+  if (typeof currentUsername === "string" && name === currentUsername.trim()) {
+    return "novo usuário precisa ser diferente do atual";
+  }
+  return null;
 }
 
 // Regras da nova senha: tamanho mínimo, diferente da atual e do default.
@@ -87,12 +109,36 @@ export function validateNewPassword(newPassword: unknown, currentPassword: unkno
   return null;
 }
 
-export async function changePassword(db: Db, currentPassword: unknown, newPassword: unknown): Promise<{ ok: true } | { ok: false; reason: string }> {
+export interface CredentialChanges {
+  newPassword?: unknown;
+  newUsername?: unknown;
+}
+
+// Troca usuário e/ou senha (exige a senha atual). A obrigação da 1ª sessão
+// (mustChange) só sai com troca de senha — trocar só o usuário não libera.
+export async function changeCredentials(
+  db: Db,
+  currentPassword: unknown,
+  changes: CredentialChanges,
+): Promise<{ ok: true; username: string } | { ok: false; reason: string }> {
   if (typeof currentPassword !== "string" || !currentPassword) return { ok: false, reason: "senha atual obrigatória" };
-  const invalid = validateNewPassword(newPassword, currentPassword);
-  if (invalid) return { ok: false, reason: invalid };
-  // Autentica a atual (hash ou default, conforme estado).
+  const wantPassword = changes.newPassword !== undefined;
+  const wantUsername = changes.newUsername !== undefined;
+  if (!wantPassword && !wantUsername) return { ok: false, reason: "informe o novo usuário e/ou a nova senha" };
+
   const row = await readState(db);
+  const currentUsername = row?.username ?? LOGIN_USER;
+
+  if (wantUsername) {
+    const invalid = validateNewUsername(changes.newUsername, currentUsername);
+    if (invalid) return { ok: false, reason: invalid };
+  }
+  if (wantPassword) {
+    const invalid = validateNewPassword(changes.newPassword, currentPassword);
+    if (invalid) return { ok: false, reason: invalid };
+  }
+
+  // Autentica a senha atual (hash ou default, conforme estado).
   let currentOk = false;
   if (!row) {
     currentOk = currentPassword === LOGIN_PASS_DEFAULT;
@@ -101,20 +147,43 @@ export async function changePassword(db: Db, currentPassword: unknown, newPasswo
     currentOk = safeEqual(hash, row.passwordHash);
   }
   if (!currentOk) return { ok: false, reason: "senha atual incorreta" };
-  const salt = generateSalt();
-  const hash = await hashPassword(newPassword as string, salt);
+
+  const username =
+    wantUsername && typeof changes.newUsername === "string" ? changes.newUsername.trim() : currentUsername;
+  // Trocar só o usuário não quita a troca obrigatória da 1ª sessão.
+  const mustChange = wantPassword ? 0 : (row?.mustChange ?? 1);
+  // Salt novo a cada troca de senha; sem troca, preserva a senha atual
+  // (se ainda não há linha, fixa o hash da senha atual sob o novo usuário).
+  let passwordSalt = row?.passwordSalt ?? generateSalt();
+  let finalHash = row?.passwordHash ?? "";
+  if (wantPassword && typeof changes.newPassword === "string") {
+    passwordSalt = generateSalt();
+    finalHash = await hashPassword(changes.newPassword, passwordSalt);
+  } else if (!row) {
+    finalHash = await hashPassword(currentPassword, passwordSalt);
+  }
   try {
     await authModel.upsert(db, {
-      passwordHash: hash,
-      passwordSalt: salt,
-      mustChange: 0,
+      username,
+      passwordHash: finalHash,
+      passwordSalt,
+      mustChange,
       updatedAt: new Date().toISOString(),
     });
   } catch (err) {
-    console.error("[auth] changePassword upsert failed:", err);
+    console.error("[auth] changeCredentials upsert failed:", err);
     return { ok: false, reason: "banco indisponível, tente de novo" };
   }
-  return { ok: true };
+  return { ok: true, username };
+}
+
+// Compat: troca só de senha (endpoint antigo continua valendo).
+export async function changePassword(
+  db: Db,
+  currentPassword: unknown,
+  newPassword: unknown,
+): Promise<{ ok: true; username?: string } | { ok: false; reason: string }> {
+  return changeCredentials(db, currentPassword, { newPassword });
 }
 
 // Helper só para testes (vitest/node): evita importar crypto do Workers.

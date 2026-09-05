@@ -1,14 +1,15 @@
 import { useMemo, useState } from "react";
 import {
-  ChatText,
-  Database,
-  DotsThreeVertical,
-  MagnifyingGlass,
-  PencilSimple,
-  SignOut,
-  SidebarSimple,
-  Trash,
-  X,
+  ChatTextIcon,
+  DatabaseIcon,
+  DotsThreeVerticalIcon,
+  MagnifyingGlassIcon,
+  PencilSimpleIcon,
+  SignOutIcon,
+  SidebarSimpleIcon,
+  TrashIcon,
+  UserIcon,
+  XIcon,
 } from "@phosphor-icons/react";
 import type { Conversation } from "@meu-gpt/shared";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ interface Props {
   onSelect: (id: string) => void;
   onRemove: (id: string) => void;
   onOpenIngest: () => void;
+  onOpenAccount: () => void;
   onLogout: () => void;
 }
 
@@ -104,14 +106,14 @@ function ConvRow({
         <DropdownMenuTrigger
           render={
             <SidebarMenuAction showOnHover className="size-6 text-muted-foreground hover:text-foreground">
-              <DotsThreeVertical className="size-3.5" />
+              <DotsThreeVerticalIcon className="size-3.5" />
               <span className="sr-only">Opções</span>
             </SidebarMenuAction>
           }
         />
         <DropdownMenuContent align="end">
           <DropdownMenuItem variant="destructive" onSelect={onRemove}>
-            <Trash className="size-3.5" /> Excluir
+            <TrashIcon className="size-3.5" /> Excluir
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -130,6 +132,7 @@ export function ChatSidebar({
   onSelect,
   onRemove,
   onOpenIngest,
+  onOpenAccount,
   onLogout,
 }: Props) {
   const { state, toggleSidebar } = useSidebar();
@@ -156,7 +159,7 @@ export function ChatSidebar({
             className="size-8 shrink-0 text-muted-foreground hover:text-foreground"
             title={collapsed ? "Expandir barra lateral" : "Fechar barra lateral"}
           >
-            {collapsed ? <SidebarSimple className="size-4" /> : <X className="size-4" />}
+            {collapsed ? <SidebarSimpleIcon className="size-4" /> : <XIcon className="size-4" />}
             <span className="sr-only">Alternar barra lateral</span>
           </Button>
           {!collapsed && (
@@ -172,7 +175,7 @@ export function ChatSidebar({
                   />
                 }
               >
-                <PencilSimple className="size-4" />
+                <PencilSimpleIcon className="size-4" />
                 <span className="sr-only">Nova conversa</span>
               </TooltipTrigger>
               <TooltipContent side="bottom">Nova conversa</TooltipContent>
@@ -194,7 +197,7 @@ export function ChatSidebar({
                 />
               }
             >
-              <PencilSimple className="size-4" />
+              <PencilSimpleIcon className="size-4" />
               <span className="sr-only">Nova conversa</span>
             </TooltipTrigger>
             <TooltipContent side="right">Nova conversa</TooltipContent>
@@ -204,7 +207,7 @@ export function ChatSidebar({
         {/* Busca no histórico — só faz sentido expandida */}
         {!collapsed && (
           <label className="relative mt-0.5 block">
-            <MagnifyingGlass className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
+            <MagnifyingGlassIcon className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -231,7 +234,7 @@ export function ChatSidebar({
                   />
                 }
               >
-                <Database className="size-4" />
+                <DatabaseIcon className="size-4" />
                 <span className="sr-only">Base de conhecimento</span>
               </TooltipTrigger>
               <TooltipContent side="right">Base de conhecimento</TooltipContent>
@@ -246,7 +249,7 @@ export function ChatSidebar({
                 <SidebarMenu>
                   <SidebarMenuItem>
                     <SidebarMenuButton onClick={onNew} tooltip="Nova conversa" className="font-medium">
-                      <PencilSimple className="size-4" />
+                      <PencilSimpleIcon className="size-4" />
                       <span>Novo chat</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -256,7 +259,7 @@ export function ChatSidebar({
                       tooltip={`Base de conhecimento (${docsCount} docs)`}
                       className="text-muted-foreground"
                     >
-                      <Database className="size-4 text-emerald-400" />
+                      <DatabaseIcon className="size-4 text-emerald-400" />
                       <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
                         <span className="truncate">Base de conhecimento</span>
                         <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] tabular-nums">
@@ -294,7 +297,7 @@ export function ChatSidebar({
 
             {filtered.length === 0 && (
               <div className="flex flex-col items-center gap-2 px-3 py-8 text-center">
-                <ChatText className="size-6 text-muted-foreground/40" />
+                <ChatTextIcon className="size-6 text-muted-foreground/40" />
                 <p className="text-xs text-muted-foreground/70">
                   {query.trim() ? "Nenhuma conversa bate com a busca." : "Nenhuma conversa ainda. Comece um novo chat."}
                 </p>
@@ -306,33 +309,62 @@ export function ChatSidebar({
 
       <SidebarFooter className="gap-1 p-2.5">
         {!collapsed && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onLogout}
-            className="w-full justify-start gap-2 text-xs text-muted-foreground hover:text-foreground"
-          >
-            <SignOut className="size-4" /> Sair
-          </Button>
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onOpenAccount}
+              className="w-full justify-start gap-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <UserIcon className="size-4" /> Conta
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onLogout}
+              className="w-full justify-start gap-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <SignOutIcon className="size-4" /> Sair
+            </Button>
+          </>
         )}
         {collapsed && (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={onLogout}
-                  className="size-8 text-muted-foreground hover:text-foreground"
-                  title="Sair"
-                />
-              }
-            >
-              <SignOut className="size-4" />
-              <span className="sr-only">Sair</span>
-            </TooltipTrigger>
-            <TooltipContent side="right">Sair</TooltipContent>
-          </Tooltip>
+          <>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={onOpenAccount}
+                    className="size-8 text-muted-foreground hover:text-foreground"
+                    title="Conta"
+                  />
+                }
+              >
+                <UserIcon className="size-4" />
+                <span className="sr-only">Conta</span>
+              </TooltipTrigger>
+              <TooltipContent side="right">Conta</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={onLogout}
+                    className="size-8 text-muted-foreground hover:text-foreground"
+                    title="Sair"
+                  />
+                }
+              >
+                <SignOutIcon className="size-4" />
+                <span className="sr-only">Sair</span>
+              </TooltipTrigger>
+              <TooltipContent side="right">Sair</TooltipContent>
+            </Tooltip>
+          </>
         )}
       </SidebarFooter>
       <SidebarRail />

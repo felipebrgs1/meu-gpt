@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Database, DownloadSimple, FileDoc, FilePdf, FileText, Trash, UploadSimple } from "@phosphor-icons/react";
+import { DatabaseIcon, DownloadSimpleIcon, FileDocIcon, FilePdfIcon, FileTextIcon, TrashIcon, UploadSimpleIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,9 +34,9 @@ function fmtBytes(n: number): string {
 
 function docIcon(mime: string, filename: string) {
   const f = filename.toLowerCase();
-  if (f.endsWith(".pdf") || mime.includes("pdf")) return <FilePdf className="size-4 text-red-400" />;
-  if (f.endsWith(".docx") || mime.includes("wordprocessingml")) return <FileDoc className="size-4 text-sky-400" />;
-  return <FileText className="size-4 text-zinc-400" />;
+  if (f.endsWith(".pdf") || mime.includes("pdf")) return <FilePdfIcon className="size-4 text-red-400" />;
+  if (f.endsWith(".docx") || mime.includes("wordprocessingml")) return <FileDocIcon className="size-4 text-sky-400" />;
+  return <FileTextIcon className="size-4 text-zinc-400" />;
 }
 
 interface Props {
@@ -122,7 +122,7 @@ export function IngestDialog({ open, onOpenChange, onChanged }: Props) {
         <DialogHeader>
           <div className="flex items-center gap-2">
             <div className="flex size-7 items-center justify-center rounded-md bg-emerald-500/15 text-emerald-400">
-              <Database className="size-4" />
+              <DatabaseIcon className="size-4" />
             </div>
             <DialogTitle>Base de conhecimento (RAG)</DialogTitle>
           </div>
@@ -134,10 +134,10 @@ export function IngestDialog({ open, onOpenChange, onChanged }: Props) {
         <Tabs defaultValue="file">
           <TabsList className="w-full">
             <TabsTrigger value="file" className="flex-1 gap-1.5">
-              <UploadSimple className="size-3.5" /> Arquivo
+              <UploadSimpleIcon className="size-3.5" /> Arquivo
             </TabsTrigger>
             <TabsTrigger value="text" className="flex-1 gap-1.5">
-              <FileText className="size-3.5" /> Colar texto
+              <FileTextIcon className="size-3.5" /> Colar texto
             </TabsTrigger>
           </TabsList>
 
@@ -152,7 +152,7 @@ export function IngestDialog({ open, onOpenChange, onChanged }: Props) {
                 if (f) setFile(f);
               }}
             >
-              <UploadSimple className="size-6 text-muted-foreground" />
+              <UploadSimpleIcon className="size-6 text-muted-foreground" />
               {file ? (
                 <span className="flex items-center gap-2 text-sm">
                   {docIcon(file.type || "", file.name)}
@@ -184,7 +184,7 @@ export function IngestDialog({ open, onOpenChange, onChanged }: Props) {
                 </>
               ) : (
                 <>
-                  <UploadSimple className="size-4" /> Indexar arquivo
+                  <UploadSimpleIcon className="size-4" /> Indexar arquivo
                 </>
               )}
             </Button>
@@ -206,7 +206,7 @@ export function IngestDialog({ open, onOpenChange, onChanged }: Props) {
                 </>
               ) : (
                 <>
-                  <UploadSimple className="size-4" /> Indexar texto
+                  <UploadSimpleIcon className="size-4" /> Indexar texto
                 </>
               )}
             </Button>
@@ -242,7 +242,7 @@ export function IngestDialog({ open, onOpenChange, onChanged }: Props) {
                       rel="noreferrer"
                       className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
                     >
-                      <DownloadSimple className="size-3.5" />
+                      <DownloadSimpleIcon className="size-3.5" />
                     </a>
                   } />
                   <TooltipContent>Baixar original (R2)</TooltipContent>
@@ -254,7 +254,7 @@ export function IngestDialog({ open, onOpenChange, onChanged }: Props) {
                       disabled={busy}
                       className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/15 hover:text-destructive disabled:opacity-40"
                     >
-                      <Trash className="size-3.5" />
+                      <TrashIcon className="size-3.5" />
                     </button>
                   } />
                   <TooltipContent>Excluir do RAG + R2</TooltipContent>

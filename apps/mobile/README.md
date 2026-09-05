@@ -9,18 +9,23 @@ falando com a mesma API (`apps/api`) e o mesmo contrato (`packages/shared`).
 
 ## Pré-requisitos
 
-- API rodando (`pnpm --filter @meu-gpt/api dev` → `:8787`)
-- `EXPO_PUBLIC_API_URL` apontando para a API **acessível do device**:
+- Por padrão o app fala com a **API de produção** (`EXPO_PUBLIC_API_URL` no `.env`
+  da raiz → `https://meu-gpt-api.felipebrgs.workers.dev`). Nada a configurar.
+- Para dev local, a API precisa estar **acessível do device**
+  (`pnpm --filter @meu-gpt/api dev` → `:8787`) e a URL sobrescrita na hora:
   - Emulador Android: `http://10.0.2.2:8787`
   - Device físico na mesma rede: `http://<IP-LAN>:8787` (ex: `http://192.168.0.10:8787`)
-  - Expo Web: pode omitir (usa mesma origem via proxy do Vite? não — defina também)
 
 ```bash
-# .env na RAIZ do monorepo (fonte única de segredos — regra do AGENTS.md)
-EXPO_PUBLIC_API_URL=http://192.168.0.10:8787
+# Produção (padrão do .env da raiz — regra do AGENTS.md: fonte única)
+EXPO_PUBLIC_API_URL=https://meu-gpt-api.felipebrgs.workers.dev
 
 pnpm --filter @meu-gpt/mobile dev
 # escaneie o QR com o Expo Go, ou: a (android) / i (ios) / w (web)
+
+# Dev local (env de processo tem precedência sobre o .env da raiz):
+EXPO_PUBLIC_API_URL=http://192.168.0.10:8787 pnpm --filter @meu-gpt/mobile dev
+# após trocar a URL, reinicie o Expo com cache limpo: expo start -c
 ```
 
 Login: usuário `felipeb` + senha (hardcoded em

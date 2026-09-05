@@ -2,7 +2,7 @@ import { memo, useEffect, useId, useState, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import mermaid from "mermaid";
-import { CaretDown, Check, Copy, Cpu, CurrencyDollar, Database, FileText, Globe, Lightning, Sparkle, Stack } from "@phosphor-icons/react";
+import { CaretDownIcon, CheckIcon, CopyIcon, CpuIcon, CurrencyDollarIcon, DatabaseIcon, FileTextIcon, GlobeIcon, LightningIcon, SparkleIcon, StackIcon } from "@phosphor-icons/react";
 import { OracleIcon } from "@/components/OracleIcon";
 import type { Citation } from "@meu-gpt/shared";
 import { Badge } from "@/components/ui/badge";
@@ -205,8 +205,8 @@ function Citations({ items }: { items: Citation[] }) {
   return (
     <Collapsible open={open} onOpenChange={setOpen} className="mt-2">
       <CollapsibleTrigger render={<Button variant="outline" size="sm" className="h-7 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground" />}>
-        <FileText className="size-3.5" />
-        Fontes ({items.length}) <CaretDown className={open ? "rotate-180 transition-transform" : "transition-transform"} />
+        <FileTextIcon className="size-3.5" />
+        Fontes ({items.length}) <CaretDownIcon className={open ? "rotate-180 transition-transform" : "transition-transform"} />
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-1.5">
         <div className="rounded-lg border border-border/50 bg-muted/30 p-2.5 text-xs space-y-1">
@@ -263,15 +263,15 @@ export function ChatMessages({ log, loading, activeSlot, onQuickPrompt, copied, 
 
           <div className="flex flex-wrap items-center justify-center gap-2">
             <Badge variant="outline" className="gap-1.5 py-1 px-3 text-xs bg-muted/40 font-normal whitespace-nowrap">
-              <Cpu className="size-3.5 text-primary" />
+              <CpuIcon className="size-3.5 text-primary" />
               <span>{activeSlot.modelName} ({activeSlot.label})</span>
             </Badge>
             <Badge variant="outline" className="gap-1.5 py-1 px-3 text-xs bg-muted/40 font-normal whitespace-nowrap">
-              <Database className="size-3.5 text-emerald-400" />
+              <DatabaseIcon className="size-3.5 text-emerald-400" />
               <span>Vectorize 1024d</span>
             </Badge>
             <Badge variant="outline" className="gap-1.5 py-1 px-3 text-xs bg-muted/40 font-normal whitespace-nowrap">
-              <Globe className="size-3.5 text-sky-400" />
+              <GlobeIcon className="size-3.5 text-sky-400" />
               <span>Cloudflare Workers</span>
             </Badge>
           </div>
@@ -336,19 +336,19 @@ export function ChatMessages({ log, loading, activeSlot, onQuickPrompt, copied, 
                               className="text-[11px] font-mono opacity-70"
                               title={m.tokensIn != null || m.tokensOut != null ? `tokens in ${m.tokensIn ?? "?"} · out ${m.tokensOut ?? "?"}` : undefined}
                             >
-                              <Lightning className="size-3 text-amber-400" />
+                              <LightningIcon className="size-3 text-amber-400" />
                               {formatTps(m.tps)}
                             </Badge>
                           )}
                           {m.costUsd != null && (
                             <Badge variant="outline" className="text-[11px] font-mono opacity-70" title="custo da resposta (OpenRouter)">
-                              <CurrencyDollar className="size-3 text-emerald-400" />
+                              <CurrencyDollarIcon className="size-3 text-emerald-400" />
                               {formatCost(m.costUsd)}
                             </Badge>
                           )}
                           {m.cachedTokens != null && m.cachedTokens > 0 && (
                             <Badge variant="outline" className="text-[11px] font-mono opacity-70" title={`${m.cachedTokens} tokens do prompt reaproveitados do cache`}>
-                              <Stack className="size-3 text-sky-400" />
+                              <StackIcon className="size-3 text-sky-400" />
                               {formatCache(m.cachedTokens)}
                             </Badge>
                           )}
@@ -359,7 +359,7 @@ export function ChatMessages({ log, loading, activeSlot, onQuickPrompt, copied, 
                               className="h-6 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"
                               onClick={() => onCopy(m.id, m.content)}
                             >
-                              {copied === m.id ? <Check className="size-3 text-emerald-400" /> : <Copy className="size-3" />}
+                              {copied === m.id ? <CheckIcon className="size-3 text-emerald-400" /> : <CopyIcon className="size-3" />}
                               {copied === m.id ? "copiado" : "copiar"}
                             </Button>
                           )}

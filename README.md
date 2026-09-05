@@ -20,8 +20,8 @@ WEB estática (meu-gpt-web) ──HTTPS──▶ API Hono (meu-gpt-api) ──�
 - **Slots de modelo** `fast | cheap | quality` resolvidos via env — ids de modelo
   só vivem em `wrangler.toml [vars]` / `.env`, nunca no código de negócio.
 - **Streaming SSE** com eventos `token` / `done` / `error`; citações só no `done`.
-- **Auth single-user:** usuário fixo + senha mutável em D1 retornam um token opaco
-  (`SESSION_TOKEN` via secret) — a 1ª sessão obriga a trocar a senha default
+- **Auth single-user:** usuário + senha mutáveis em D1 retornam um token opaco
+  (`SESSION_TOKEN` via secret) — a 1ª sessão obriga a trocar a credencial default
   (ver `apps/api/src/services/auth.service.ts` + tabela `auth_state`).
 
 ## Stack
@@ -44,7 +44,7 @@ pnpm dev                    # api :8787 + web :5173 (proxy /api → 8787)
 ```
 
 Login em dev: `POST /api/v1/auth/login` com `user` / `123456` na 1ª vez → a web
-pede a troca obrigatória (mín. 8 chars) → token em `localStorage["meu-gpt-token"]`.
+pede a troca obrigatória (usuário + senha nova, mín. 8 chars) → token em `localStorage["meu-gpt-token"]`.
 Reset dev ao default: `wrangler d1 execute meu-gpt --local --command "DELETE FROM auth_state;"`.
 
 > Fonte única de segredos: `.env` na raiz. `apps/api/.dev.vars` é gerado

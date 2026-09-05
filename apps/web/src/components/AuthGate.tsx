@@ -12,11 +12,11 @@ import { ChangePasswordCard } from "./ChangePasswordCard";
 // Gate single-user: usuário + senha trocados por token de sessão.
 // Na 1ª sessão (senha default) cai na troca obrigatória antes de entrar.
 export function AuthGate({ onAuth }: { onAuth: () => void }) {
-  const [user, setUser] = useState("user"); // default = LOGIN_USER da API
+  const [user, setUser] = useState("user"); // default inicial da API (mutável em D1)
   const [pass, setPass] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
-  const [mustChange, setMustChange] = useState(false);
+  const [mustChange, setMustChange] = useState<null | { username: string }>(null);
 
   async function enter() {
     if (!user.trim() || !pass || busy) return;
@@ -25,7 +25,7 @@ export function AuthGate({ onAuth }: { onAuth: () => void }) {
     try {
       const out = await login(user.trim(), pass);
       if (out.mustChangePassword) {
-        setMustChange(true);
+        setMustChange({ username: out.username || user.trim() });
       } else {
         onAuth();
       }
@@ -37,7 +37,7 @@ export function AuthGate({ onAuth }: { onAuth: () => void }) {
   }
 
   if (mustChange) {
-    return <ChangePasswordCard currentHint={pass} onDone={onAuth} />;
+    return <ChangePasswordCard usernameHint={mustChange.username} currentHint={pass} onDone={onAuth} />;
   }
 
   return (

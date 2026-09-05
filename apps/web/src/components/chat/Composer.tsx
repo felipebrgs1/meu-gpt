@@ -1,4 +1,4 @@
-import { ArrowUp, Database, UploadSimple } from "@phosphor-icons/react";
+import { ArrowUpIcon, DatabaseIcon, UploadSimpleIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
 import { Textarea } from "@/components/ui/textarea";
@@ -49,7 +49,7 @@ export function Composer({ input, onInput, onSend, busy, activeSlot, sourceCount
                     />
                   }
                 >
-                  <UploadSimple className="size-3.5" />
+                  <UploadSimpleIcon className="size-3.5" />
                   <span>Adicionar doc</span>
                 </TooltipTrigger>
                 <TooltipContent>Indexar texto no Vectorize</TooltipContent>
@@ -63,7 +63,7 @@ export function Composer({ input, onInput, onSend, busy, activeSlot, sourceCount
                   sourceCount ? "bg-emerald-500/15 text-emerald-400 font-medium" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <Database className="size-3.5" />
+                <DatabaseIcon className="size-3.5" />
                 <span>RAG · {sourceCount ? `${sourceCount} fonte(s)` : "todos"}</span>
               </Button>
             </div>
@@ -84,7 +84,7 @@ export function Composer({ input, onInput, onSend, busy, activeSlot, sourceCount
                     />
                   }
                 >
-                  <ArrowUp className="size-4" weight="bold" />
+                  <ArrowUpIcon className="size-4" weight="bold" />
                 </TooltipTrigger>
                 <TooltipContent>Enviar mensagem</TooltipContent>
               </Tooltip>

@@ -1,0 +1,1 @@
+ALTER TABLE `auth_state` ADD `username` text DEFAULT 'user' NOT NULL;

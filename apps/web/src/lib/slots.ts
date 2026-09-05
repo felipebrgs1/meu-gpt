@@ -1,4 +1,4 @@
-import { BookOpen, CodeBlock, Database, Leaf, Lightning, Sparkle, Terminal } from "@phosphor-icons/react";
+import { BookOpenIcon, CodeBlockIcon, DatabaseIcon, LeafIcon, LightningIcon, SparkleIcon, TerminalIcon } from "@phosphor-icons/react";
 
 // Constantes do chat (slots de modelo + prompts de exemplo).
 // Slots, não marcas: ids resolvidos via env (CHAT_MODEL_*) no backend.
@@ -10,17 +10,17 @@ export interface SlotOption {
   label: string;
   modelName: string;
   hint: string;
-  icon: typeof Lightning;
+  icon: typeof LightningIcon;
 }
 
 export const SLOTS: SlotOption[] = [
-  { id: "fast", label: "Fast", modelName: "MiniMax-M3", hint: "Rápido e gratuito", icon: Lightning },
-  { id: "cheap", label: "Cheap", modelName: "GLM-5.3-flash", hint: "Custo-benefício", icon: Leaf },
-  { id: "quality", label: "Quality", modelName: "GLM-5.3-flash", hint: "Alta precisão", icon: Sparkle },
+  { id: "fast", label: "Fast", modelName: "MiniMax-M3", hint: "Rápido e gratuito", icon: LightningIcon },
+  { id: "cheap", label: "Cheap", modelName: "GLM-5.3-flash", hint: "Custo-benefício", icon: LeafIcon },
+  { id: "quality", label: "Quality", modelName: "GLM-5.3-flash", hint: "Alta precisão", icon: SparkleIcon },
 ];
 
 export interface QuickPrompt {
-  icon: typeof Sparkle;
+  icon: typeof SparkleIcon;
   category: string;
   title: string;
   prompt: string;
@@ -28,25 +28,25 @@ export interface QuickPrompt {
 
 export const QUICK_PROMPTS: QuickPrompt[] = [
   {
-    icon: Database,
+    icon: DatabaseIcon,
     category: "RAG & Vetores",
     title: "Como funciona a busca vetorial?",
     prompt: "Explique como o Cloudflare Vectorize (1024 dimensões + métrica cosine) funciona junto com o Perplexity Embed V1 0.6B neste projeto.",
   },
   {
-    icon: BookOpen,
+    icon: BookOpenIcon,
     category: "Documentação",
     title: "Exemplo de RAG com citações",
     prompt: "Me dê um exemplo prático de como o prompt de RAG formata as respostas citando fontes com [doc:chunk] e como o frontend exibe as citações.",
   },
   {
-    icon: Terminal,
+    icon: TerminalIcon,
     category: "Arquitetura",
-    title: "Stack Cloudflare Workers + D1",
+    title: "StackIcon Cloudflare Workers + D1",
     prompt: "Explique a arquitetura deste projeto: HonoJS na edge, Drizzle ORM sobre D1 SQLite, R2 para texto e SSE para streaming em tempo real.",
   },
   {
-    icon: CodeBlock,
+    icon: CodeBlockIcon,
     category: "Código",
     title: "Gerar endpoint de streaming",
     prompt: "Escreva um exemplo em TypeScript com HonoJS implementando um ReadableStream com Server-Sent Events (SSE) compatível com Cloudflare Workers.",

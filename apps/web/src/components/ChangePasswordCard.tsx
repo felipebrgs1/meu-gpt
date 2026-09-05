@@ -5,13 +5,23 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import { changePassword } from "../lib/api";
+import { changeCredentials } from "../lib/api";
 import { BRANDING } from "../branding.gen.js";
 
-// Tela obrigatória da 1ª sessão: troca a senha default (user/123456).
+// Tela obrigatória da 1ª sessão: troca a credencial default (user/123456).
+// O usuário pode manter ou trocar o nome; a senha nova é obrigatória.
 // Bloqueia o app até concluir — a API também barra tudo com 403
-// password_change_required enquanto a troca não acontece.
-export function ChangePasswordCard({ currentHint, onDone }: { currentHint: string; onDone: () => void }) {
+// password_change_required enquanto a troca de senha não acontece.
+export function ChangePasswordCard({
+  usernameHint,
+  currentHint,
+  onDone,
+}: {
+  usernameHint: string;
+  currentHint: string;
+  onDone: () => void;
+}) {
+  const [username, setUsername] = useState(usernameHint || "user");
   const [current, setCurrent] = useState(currentHint);
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -20,8 +30,13 @@ export function ChangePasswordCard({ currentHint, onDone }: { currentHint: strin
 
   async function submit() {
     if (busy) return;
+    const name = username.trim();
+    if (!name || name.length < 2) {
+      setErr("o usuário precisa de ao menos 2 caracteres.");
+      return;
+    }
     if (!current || !next || !confirm) {
-      setErr("preencha os três campos.");
+      setErr("preencha a senha atual, a nova e a confirmação.");
       return;
     }
     if (next.length < 8) {
@@ -39,10 +54,14 @@ export function ChangePasswordCard({ currentHint, onDone }: { currentHint: strin
     setBusy(true);
     setErr("");
     try {
-      await changePassword(current, next);
+      await changeCredentials({
+        currentPassword: current,
+        newPassword: next,
+        ...(name !== (usernameHint || "user") ? { newUsername: name } : {}),
+      });
       onDone();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "não foi possível trocar a senha.");
+      setErr(e instanceof Error ? e.message : "não foi possível salvar.");
     } finally {
       setBusy(false);
     }
@@ -59,10 +78,23 @@ export function ChangePasswordCard({ currentHint, onDone }: { currentHint: strin
             <CardTitle className="text-xl">{BRANDING.name}</CardTitle>
           </div>
           <CardDescription>
-            Por segurança, troque a senha inicial antes de usar o app. A senha padrão não pode ser mantida.
+            Por segurança, ajuste seu usuário e troque a senha inicial antes de usar o app. A senha padrão não
+            pode ser mantida.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="newuser">usuário</Label>
+            <Input
+              id="newuser"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && submit()}
+              placeholder="usuário"
+              className="mt-1"
+              autoComplete="username"
+            />
+          </div>
           <div className="space-y-1.5">
             <Label htmlFor="cur">senha atual</Label>
             <Input
@@ -111,7 +143,7 @@ export function ChangePasswordCard({ currentHint, onDone }: { currentHint: strin
                 <Spinner /> Salvando…
               </>
             ) : (
-              <>Trocar senha e entrar</>
+              <>Salvar e entrar</>
             )}
           </Button>
         </CardFooter>

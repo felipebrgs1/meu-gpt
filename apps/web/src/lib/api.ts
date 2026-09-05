@@ -39,16 +39,26 @@ function authHeaders(): Record<string, string> {
   return { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` };
 }
 
-export async function login(username: string, password: string): Promise<{ token: string; mustChangePassword: boolean }> {
+export interface AuthInfo {
+  token: string;
+  mustChangePassword: boolean;
+  username: string;
+}
+
+export async function login(username: string, password: string): Promise<AuthInfo> {
   const res = await fetch(`${API}/api/v1/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
   });
   if (!res.ok) throw new Error("usuário ou senha inválidos");
-  const data = (await res.json()) as { token: string; mustChangePassword?: boolean };
+  const data = (await res.json()) as { token: string; mustChangePassword?: boolean; username?: string };
   localStorage.setItem("meu-gpt-token", data.token);
-  return { token: data.token, mustChangePassword: data.mustChangePassword ?? true };
+  return {
+    token: data.token,
+    mustChangePassword: data.mustChangePassword ?? true,
+    username: data.username ?? username.trim(),
+  };
 }
 
 async function throwForAuthError(res: Response, fallback: string): Promise<never> {
@@ -57,22 +67,36 @@ async function throwForAuthError(res: Response, fallback: string): Promise<never
   throw new Error(`${fallback} ${res.status}`);
 }
 
-export async function getAuthStatus(): Promise<{ mustChangePassword: boolean }> {
+export async function getAuthStatus(): Promise<{ mustChangePassword: boolean; username: string }> {
   const res = await fetch(`${API}/api/v1/auth/status`, { headers: authHeaders() });
   if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) await throwForAuthError(res, "status");
-  return (await res.json()) as { mustChangePassword: boolean };
+  const data = (await res.json()) as { mustChangePassword: boolean; username?: string };
+  return { mustChangePassword: data.mustChangePassword, username: data.username ?? "" };
 }
 
-export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+export interface CredentialChanges {
+  currentPassword: string;
+  newPassword?: string;
+  newUsername?: string;
+}
+
+export async function changeCredentials(ch: CredentialChanges): Promise<{ username: string }> {
   const res = await fetch(`${API}/api/v1/auth/change-password`, {
     method: "POST",
     headers: authHeaders(),
-    body: JSON.stringify({ currentPassword, newPassword }),
+    body: JSON.stringify(ch),
   });
-  if (res.ok) return;
+  if (res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { username?: string };
+    return { username: data.username ?? ch.newUsername?.trim() ?? "" };
+  }
   const j = (await res.json().catch(() => ({ error: res.statusText }))) as { error?: string };
   throw new Error(j.error ?? `troca ${res.status}`);
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await changeCredentials({ currentPassword, newPassword });
 }
 
 export function logout() {

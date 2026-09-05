@@ -51,12 +51,13 @@ export const loginAttempts = sqliteTable("login_attempts", {
   updatedAt: text("updated_at").notNull(),
 });
 
-// Auth single-user: hash da senha customizada (troca obrigatória na 1ª sessão).
-// Sem linha = credencial default ainda ativa (LOGIN_USER/LOGIN_PASS do service)
+// Auth single-user: credencial customizada (troca obrigatória na 1ª sessão).
+// Sem linha = credencial default ainda ativa (DEFAULT_USER/LOGIN_PASS do service)
 // e mustChange = true. Após a troca, mustChange = 0 e o login passa a
-// validar só contra o hash (o default deixa de valer).
+// validar só contra username + hash em D1 (o default deixa de valer).
 export const authState = sqliteTable("auth_state", {
   id: text("id").primaryKey(), // sempre 'single'
+  username: text("username").notNull().default("user"), // login mutável
   passwordHash: text("password_hash").notNull(), // SHA-256(salt:password) em hex
   passwordSalt: text("password_salt").notNull(), // 16 bytes em hex
   mustChange: integer("must_change").notNull().default(1), // 1 = troca pendente

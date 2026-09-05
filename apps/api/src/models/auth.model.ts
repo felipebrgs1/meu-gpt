@@ -2,8 +2,16 @@ import type { Db } from "@meu-gpt/db";
 import { authState, eq } from "@meu-gpt/db";
 
 // MODEL — acesso a dados do estado de auth single-user (D1).
-// Uma única linha id='single'. Ausência = senha default ainda ativa.
+// Uma única linha id='single'. Ausência = credencial default ainda ativa.
 export const SINGLE_AUTH_ID = "single";
+
+export interface AuthUpsert {
+  username: string;
+  passwordHash: string;
+  passwordSalt: string;
+  mustChange: number;
+  updatedAt: string;
+}
 
 export const authModel = {
   async get(db: Db) {
@@ -11,12 +19,18 @@ export const authModel = {
     return rows[0] ?? null;
   },
 
-  async upsert(db: Db, data: { passwordHash: string; passwordSalt: string; mustChange: number; updatedAt: string }) {
+  async upsert(db: Db, data: AuthUpsert) {
     const existing = await this.get(db);
     if (existing) {
       await db
         .update(authState)
-        .set({ passwordHash: data.passwordHash, passwordSalt: data.passwordSalt, mustChange: data.mustChange, updatedAt: data.updatedAt })
+        .set({
+          username: data.username,
+          passwordHash: data.passwordHash,
+          passwordSalt: data.passwordSalt,
+          mustChange: data.mustChange,
+          updatedAt: data.updatedAt,
+        })
         .where(eq(authState.id, SINGLE_AUTH_ID));
     } else {
       await db.insert(authState).values({ id: SINGLE_AUTH_ID, ...data });

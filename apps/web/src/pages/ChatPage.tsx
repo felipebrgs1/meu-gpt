@@ -5,6 +5,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthGate } from "../components/AuthGate";
 import { ChangePasswordCard } from "../components/ChangePasswordCard";
+import { AccountDialog } from "../components/chat/AccountDialog";
 import { ChatHeader } from "../components/chat/ChatHeader";
 import { ChatMessages } from "../components/chat/ChatMessages";
 import { ChatSidebar } from "../components/chat/ChatSidebar";
@@ -30,6 +31,8 @@ export function ChatPage() {
   const [authed, setAuthed] = useState(() => !!getToken());
   // Token antigo + senha default ainda ativa = bloqueia o chat até trocar.
   const [mustChange, setMustChange] = useState(false);
+  const [accountUser, setAccountUser] = useState("user");
+  const [accountOpen, setAccountOpen] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(() => !!getToken());
   const [convs, setConvs] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -71,6 +74,7 @@ export function ChatPage() {
       .then((s) => {
         if (!alive) return;
         setMustChange(s.mustChangePassword);
+        if (s.username) setAccountUser(s.username);
         if (!s.mustChangePassword) {
           void refreshConvs();
           listDocuments().then(setDocs).catch(() => {});
@@ -224,6 +228,7 @@ export function ChatPage() {
   if (mustChange) {
     return (
       <ChangePasswordCard
+        usernameHint={accountUser}
         currentHint=""
         onDone={() => {
           setMustChange(false);
@@ -245,6 +250,7 @@ export function ChatPage() {
           onSelect={select}
           onRemove={remove}
           onOpenIngest={() => setIngestOpen(true)}
+          onOpenAccount={() => setAccountOpen(true)}
           onLogout={() => {
             logout();
             setMustChange(false);
@@ -292,6 +298,15 @@ export function ChatPage() {
           open={ingestOpen}
           onOpenChange={setIngestOpen}
           onChanged={() => listDocuments().then(setDocs).catch(() => {})}
+        />
+
+        <AccountDialog
+          open={accountOpen}
+          onOpenChange={(v) => {
+            setAccountOpen(v);
+            if (!v) getAuthStatus().then((s) => s.username && setAccountUser(s.username)).catch(() => {});
+          }}
+          username={accountUser}
         />
       </SidebarProvider>
     </TooltipProvider>
