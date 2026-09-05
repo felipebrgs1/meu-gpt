@@ -39,16 +39,40 @@ function authHeaders(): Record<string, string> {
   return { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` };
 }
 
-export async function login(username: string, password: string): Promise<string> {
+export async function login(username: string, password: string): Promise<{ token: string; mustChangePassword: boolean }> {
   const res = await fetch(`${API}/api/v1/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
   });
   if (!res.ok) throw new Error("usuário ou senha inválidos");
-  const { token } = (await res.json()) as { token: string };
-  localStorage.setItem("meu-gpt-token", token);
-  return token;
+  const data = (await res.json()) as { token: string; mustChangePassword?: boolean };
+  localStorage.setItem("meu-gpt-token", data.token);
+  return { token: data.token, mustChangePassword: data.mustChangePassword ?? true };
+}
+
+async function throwForAuthError(res: Response, fallback: string): Promise<never> {
+  const j = (await res.json().catch(() => null)) as { error?: string } | null;
+  if (j?.error) throw new Error(j.error);
+  throw new Error(`${fallback} ${res.status}`);
+}
+
+export async function getAuthStatus(): Promise<{ mustChangePassword: boolean }> {
+  const res = await fetch(`${API}/api/v1/auth/status`, { headers: authHeaders() });
+  if (res.status === 401) throw new Error("unauthorized");
+  if (!res.ok) await throwForAuthError(res, "status");
+  return (await res.json()) as { mustChangePassword: boolean };
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  const res = await fetch(`${API}/api/v1/auth/change-password`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  if (res.ok) return;
+  const j = (await res.json().catch(() => ({ error: res.statusText }))) as { error?: string };
+  throw new Error(j.error ?? `troca ${res.status}`);
 }
 
 export function logout() {
@@ -57,7 +81,7 @@ export function logout() {
 
 export async function listConversations(): Promise<Conversation[]> {
   const res = await fetch(`${API}/api/v1/conversations`, { headers: authHeaders() });
-  if (!res.ok) throw new Error(`conversations ${res.status}`);
+  if (!res.ok) await throwForAuthError(res, "conversations");
   return (await res.json()) as Conversation[];
 }
 

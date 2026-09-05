@@ -43,6 +43,36 @@ export const ACCEPTED_DOC_TYPES = [
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB — PDFs grandes ficam pra V2 (async)
 
+// Auth single-user: primeira sessão obriga a trocar a senha default.
+// Login devolve mustChangePassword; enquanto true, a API bloqueia tudo
+// (403 password_change_required) exceto /auth/status e /auth/change-password.
+export const loginRequestSchema = z.object({
+  username: z.string().min(1).max(100),
+  password: z.string().min(1).max(200),
+});
+
+export type LoginRequest = z.infer<typeof loginRequestSchema>;
+
+export const loginResponseSchema = z.object({
+  token: z.string().min(1),
+  mustChangePassword: z.boolean(),
+});
+
+export type LoginResponse = z.infer<typeof loginResponseSchema>;
+
+export const changePasswordRequestSchema = z.object({
+  currentPassword: z.string().min(1).max(200),
+  newPassword: z.string().min(8, "nova senha precisa de ao menos 8 caracteres").max(200),
+});
+
+export type ChangePasswordRequest = z.infer<typeof changePasswordRequestSchema>;
+
+export const authStatusResponseSchema = z.object({
+  mustChangePassword: z.boolean(),
+});
+
+export type AuthStatusResponse = z.infer<typeof authStatusResponseSchema>;
+
 // Eventos SSE do chat:
 // text: { token } | done: { fullText, citations, usage } | error: { message }
 export const citationSchema = z.object({

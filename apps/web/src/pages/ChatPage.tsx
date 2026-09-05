@@ -4,6 +4,7 @@ import type { Conversation } from "@meu-gpt/shared";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthGate } from "../components/AuthGate";
+import { ChangePasswordCard } from "../components/ChangePasswordCard";
 import { ChatHeader } from "../components/chat/ChatHeader";
 import { ChatMessages } from "../components/chat/ChatMessages";
 import { ChatSidebar } from "../components/chat/ChatSidebar";
@@ -11,6 +12,7 @@ import { Composer } from "../components/chat/Composer";
 import { IngestDialog } from "../components/chat/IngestDialog";
 import {
   deleteConversation,
+  getAuthStatus,
   getMessages,
   getToken,
   listConversations,
@@ -26,6 +28,9 @@ import { SLOTS, type Slot } from "../lib/slots";
 // Blocos visuais moram em components/chat/*; novas páginas entram em pages/ + router.tsx.
 export function ChatPage() {
   const [authed, setAuthed] = useState(() => !!getToken());
+  // Token antigo + senha default ainda ativa = bloqueia o chat até trocar.
+  const [mustChange, setMustChange] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(() => !!getToken());
   const [convs, setConvs] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [log, setLog] = useState<UIMessage[]>([]);
@@ -48,16 +53,46 @@ export function ChatPage() {
   async function refreshConvs() {
     try {
       setConvs(await listConversations());
-    } catch {
+    } catch (e) {
+      if (e instanceof Error && e.message.includes("password_change_required")) setMustChange(true);
       /* token expirado etc. */
     }
   }
 
+  // Sessão já logada (token no storage) ainda precisa validar a troca obrigatória.
   useEffect(() => {
-    if (authed) {
-      void refreshConvs();
-      listDocuments().then(setDocs).catch(() => {});
+    if (!authed) {
+      setCheckingAuth(false);
+      return;
     }
+    let alive = true;
+    setCheckingAuth(true);
+    getAuthStatus()
+      .then((s) => {
+        if (!alive) return;
+        setMustChange(s.mustChangePassword);
+        if (!s.mustChangePassword) {
+          void refreshConvs();
+          listDocuments().then(setDocs).catch(() => {});
+        }
+      })
+      .catch((e) => {
+        if (!alive) return;
+        // 403 password_change_required (ou API antiga sem /status): força a troca.
+        const msg = e instanceof Error ? e.message : "";
+        if (msg.includes("password_change_required") || msg.includes("status 404")) {
+          setMustChange(true);
+        } else {
+          // Token inválido etc: trata como deslogado no próximo erro de lista.
+          void refreshConvs();
+        }
+      })
+      .finally(() => {
+        if (alive) setCheckingAuth(false);
+      });
+    return () => {
+      alive = false;
+    };
   }, [authed]);
 
   async function select(id: string) {
@@ -185,6 +220,19 @@ export function ChatPage() {
   }
 
   if (!authed) return <AuthGate onAuth={() => setAuthed(true)} />;
+  if (checkingAuth) return null;
+  if (mustChange) {
+    return (
+      <ChangePasswordCard
+        currentHint=""
+        onDone={() => {
+          setMustChange(false);
+          void refreshConvs();
+          listDocuments().then(setDocs).catch(() => {});
+        }}
+      />
+    );
+  }
 
   return (
     <TooltipProvider>
@@ -199,6 +247,7 @@ export function ChatPage() {
           onOpenIngest={() => setIngestOpen(true)}
           onLogout={() => {
             logout();
+            setMustChange(false);
             setAuthed(false);
           }}
         />

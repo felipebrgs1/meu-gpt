@@ -7,26 +7,39 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { login } from "../lib/api";
 import { BRANDING } from "../branding.gen.js";
+import { ChangePasswordCard } from "./ChangePasswordCard";
 
-// Gate single-user: usuário + senha (hardcoded na API) trocados por token de sessão.
+// Gate single-user: usuário + senha trocados por token de sessão.
+// Na 1ª sessão (senha default) cai na troca obrigatória antes de entrar.
 export function AuthGate({ onAuth }: { onAuth: () => void }) {
   const [user, setUser] = useState("user"); // default = LOGIN_USER da API
   const [pass, setPass] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [mustChange, setMustChange] = useState(false);
+
   async function enter() {
     if (!user.trim() || !pass || busy) return;
     setBusy(true);
     setErr("");
     try {
-      await login(user.trim(), pass);
-      onAuth();
+      const out = await login(user.trim(), pass);
+      if (out.mustChangePassword) {
+        setMustChange(true);
+      } else {
+        onAuth();
+      }
     } catch {
       setErr("usuário ou senha inválidos.");
     } finally {
       setBusy(false);
     }
   }
+
+  if (mustChange) {
+    return <ChangePasswordCard currentHint={pass} onDone={onAuth} />;
+  }
+
   return (
     <div className="dark flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm border-border/60 shadow-xl">

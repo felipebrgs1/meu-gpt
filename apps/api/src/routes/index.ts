@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { Env } from "../env.js";
 import { loginLimiter, writeLimiter } from "../middleware/rate-limit.js";
-import { health, login } from "../controllers/auth.controller.js";
+import { changeUserPassword, health, login, status } from "../controllers/auth.controller.js";
 import * as conversations from "../controllers/conversations.controller.js";
 import * as documents from "../controllers/documents.controller.js";
 import { chat } from "../controllers/chat.controller.js";
@@ -13,6 +13,8 @@ export const routes = new Hono<{ Bindings: Env }>();
 // público (login com rate limit anti-brute-force)
 routes.get("/api/v1/health", health);
 routes.post("/api/v1/auth/login", loginLimiter, login);
+routes.get("/api/v1/auth/status", status);
+routes.post("/api/v1/auth/change-password", loginLimiter, changeUserPassword);
 
 // protegido
 routes.post("/api/v1/conversations", conversations.create);

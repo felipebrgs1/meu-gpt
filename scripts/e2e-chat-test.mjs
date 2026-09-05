@@ -113,6 +113,14 @@ async function main() {
   if (!login.ok || !login.json?.token) throw new Error(`login falhou: HTTP ${login.status} ${login.text.slice(0, 120)}`);
   const token = login.json.token;
   console.log("[e2e] token ok");
+  if (login.json?.mustChangePassword) {
+    throw new Error(
+      "[e2e] senha default ainda ativa (mustChangePassword=true) — a API bloqueia o chat com 403 password_change_required. " +
+        "Troque a senha na UI (1ª sessão) ou via: " +
+        `curl -X POST ${BASE}/api/v1/auth/change-password -H "Authorization: Bearer <token>" -H "Content-Type: application/json" ` +
+        `-d '{"currentPassword":"${pass}","newPassword":"<nova-8+chars>"}' — depois rode com E2E_PASS=<nova> node scripts/e2e-chat-test.mjs`
+    );
+  }
 
   const listIds = async () => ((await req("/api/v1/conversations", { token })).json ?? []).map((c) => c.id);
 
