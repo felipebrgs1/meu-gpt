@@ -5,7 +5,7 @@ account_id = "78fedbeba68de80a823e65652da5f2c5" # pessoal (Felipeborgacogame). T
 
 [vars]
 EMBED_MODEL = "perplexity/pplx-embed-v1-0.6b"
-CHAT_MODEL_FAST = "x-ai/grok-4.1-fast:free"
+CHAT_MODEL_FAST = "minimax/MiniMax-M3:free"
 CHAT_MODEL_CHEAP = "z-ai/glm-5.3-flash"
 CHAT_MODEL_QUALITY = "z-ai/glm-5.3-flash"
 RERANK_ENABLED = "false"
@@ -18,6 +18,7 @@ SINGLE_USER_ID = "me"
 [[vectorize]]
 binding = "VECTORIZE"
 index_name = "meu-gpt"
+remote = true # dev local usa o índice de produção (v4 não simula Vectorize local)
 
 [[d1_databases]]
 binding = "DB"

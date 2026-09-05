@@ -1,9 +1,21 @@
-import type { Citation } from "@meu-gpt/shared";
+import type { Citation, Conversation } from "@meu-gpt/shared";
 
 const API = import.meta.env.VITE_API_URL ?? "";
 
+export interface UIMessage {
+  id: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  model?: string | null;
+  citations?: Citation[];
+}
+
 export function getToken(): string {
   return localStorage.getItem("meu-gpt-token") ?? "";
+}
+
+function authHeaders(): Record<string, string> {
+  return { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` };
 }
 
 export async function mintDevToken(setupSecret: string): Promise<string> {
@@ -12,26 +24,75 @@ export async function mintDevToken(setupSecret: string): Promise<string> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ setupSecret }),
   });
-  if (!res.ok) throw new Error("dev-token falhou");
+  if (!res.ok) throw new Error("setupSecret inválido");
   const { token } = (await res.json()) as { token: string };
   localStorage.setItem("meu-gpt-token", token);
   return token;
 }
 
+export function logout() {
+  localStorage.removeItem("meu-gpt-token");
+}
+
+export async function listConversations(): Promise<Conversation[]> {
+  const res = await fetch(`${API}/api/v1/conversations`, { headers: authHeaders() });
+  if (!res.ok) throw new Error(`conversations ${res.status}`);
+  return (await res.json()) as Conversation[];
+}
+
+export async function getMessages(conversationId: string): Promise<UIMessage[]> {
+  const res = await fetch(`${API}/api/v1/conversations/${conversationId}/messages`, { headers: authHeaders() });
+  if (!res.ok) throw new Error(`messages ${res.status}`);
+  const rows = (await res.json()) as {
+    id: string;
+    role: string;
+    content: string;
+    model: string | null;
+    citationsJson: string | null;
+  }[];
+  return rows.map((r) => ({
+    id: r.id,
+    role: r.role as UIMessage["role"],
+    content: r.content,
+    model: r.model,
+    citations: r.citationsJson ? (JSON.parse(r.citationsJson) as Citation[]) : [],
+  }));
+}
+
+export async function deleteConversation(id: string): Promise<void> {
+  const res = await fetch(`${API}/api/v1/conversations/${id}`, { method: "DELETE", headers: authHeaders() });
+  if (!res.ok) throw new Error(`delete ${res.status}`);
+}
+
+export async function ingestDocument(title: string, text: string): Promise<{ documentId: string; chunkCount: number }> {
+  const res = await fetch(`${API}/api/v1/documents/ingest`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ title, text }),
+  });
+  if (!res.ok) throw new Error(`ingest ${res.status}: ${await res.text()}`);
+  return (await res.json()) as { documentId: string; chunkCount: number };
+}
+
 export interface StreamHandlers {
   onToken: (t: string) => void;
-  onDone: (fullText: string, citations: Citation[]) => void;
+  onDone: (fullText: string, citations: Citation[], conversationId: string, model: string) => void;
   onError: (msg: string) => void;
 }
 
 // POST /api/v1/chat com SSE (eventos token/done/error, citações só no done)
 export async function streamChat(
-  body: { slot: "fast" | "cheap" | "quality"; messages: { role: string; content: string }[]; useRag: boolean; conversationId?: string },
+  body: {
+    slot: "fast" | "cheap" | "quality";
+    messages: { role: string; content: string }[];
+    useRag: boolean;
+    conversationId?: string;
+  },
   h: StreamHandlers,
 ) {
   const res = await fetch(`${API}/api/v1/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+    headers: authHeaders(),
     body: JSON.stringify(body),
   });
   if (!res.ok || !res.body) {
@@ -42,7 +103,6 @@ export async function streamChat(
   const decoder = new TextDecoder();
   let buf = "";
   let full = "";
-  let citations: Citation[] = [];
   for (;;) {
     const { done, value } = await reader.read();
     if (done) break;
@@ -59,12 +119,13 @@ export async function streamChat(
           full += json.token as string;
           h.onToken(json.token as string);
         } else if (event === "done") {
-          citations = json.citations ?? [];
-          h.onDone(json.fullText ?? full, citations);
+          h.onDone(json.fullText ?? full, json.citations ?? [], json.conversationId, json.usage?.model ?? "");
         } else if (event === "error") {
           h.onError(json.message);
         }
-      } catch { /* noop */ }
+      } catch {
+        /* noop */
+      }
     }
   }
 }

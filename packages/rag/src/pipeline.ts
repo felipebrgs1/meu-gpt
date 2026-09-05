@@ -12,8 +12,10 @@ export async function retrieveContext(opts: {
   loadText: (id: string) => Promise<{ text: string; documentId: string; title: string } | null>;
 }) {
   const { query, embedder, store, reranker, loadText } = opts;
-  const topK = opts.topK ?? Number(process.env.RAG_TOPK ?? 20);
-  const topN = opts.topN ?? Number(process.env.RERANK_TOPN ?? 5);
+  const defaultTopK = typeof process !== "undefined" ? Number(process.env?.RAG_TOPK ?? 20) : 20;
+  const defaultTopN = typeof process !== "undefined" ? Number(process.env?.RERANK_TOPN ?? 5) : 5;
+  const topK = opts.topK ?? defaultTopK;
+  const topN = opts.topN ?? defaultTopN;
 
   const qvec = await embedder.embedQuery(query);
   const matches = await store.query(qvec, topK, opts.filter);

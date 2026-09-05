@@ -47,6 +47,14 @@ app.get("/api/v1/conversations/:id/messages", async (c) => {
   return c.json(rows);
 });
 
+app.delete("/api/v1/conversations/:id", async (c) => {
+  const db = createDb(c.env.DB);
+  const id = c.req.param("id");
+  await db.delete(messages).where(eq(messages.conversationId, id));
+  await db.delete(conversations).where(eq(conversations.id, id));
+  return c.json({ ok: true });
+});
+
 // ---------- ingest: md/txt/PDF pequeno síncrono ----------
 app.post("/api/v1/documents/ingest", zValidator("json", ingestRequestSchema), async (c) => {
   const { title, text } = c.req.valid("json");
@@ -123,6 +131,8 @@ app.post("/api/v1/chat", zValidator("json", chatRequestSchema), async (c) => {
     ragDocs = ranked.map((r: { title: string; text: string }) => ({ title: r.title, text: r.text }));
     citations = ranked.map((r: { documentId: string; title: string; id: string; rerankScore: number }) => ({ documentId: r.documentId, title: r.title, chunkId: r.id, score: r.rerankScore }));
   }
+
+  await db.update(conversations).set({ updatedAt: t }).where(eq(conversations.id, conversationId));
 
   const userMsgId = rid();
   if (lastUser) {

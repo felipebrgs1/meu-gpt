@@ -6,15 +6,19 @@ import type { Reranker, RerankCandidate, RerankedDoc } from "../types.js";
 export class VoyageReranker implements Reranker {
   readonly model: string;
   readonly enabled: boolean;
+  private baseUrl: string;
+
   constructor(
     private apiKey: string,
     opts?: { model?: string; enabled?: boolean; baseUrl?: string },
   ) {
-    this.model = opts?.model ?? process.env.RERANK_MODEL ?? "voyageai/rerank-2.5";
-    this.enabled = opts?.enabled ?? process.env.RERANK_ENABLED === "true";
-    this.baseUrl = opts?.baseUrl ?? process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1";
+    const envModel = typeof process !== "undefined" ? process.env?.RERANK_MODEL : undefined;
+    const envEnabled = typeof process !== "undefined" ? process.env?.RERANK_ENABLED === "true" : false;
+    const envBase = typeof process !== "undefined" ? process.env?.OPENROUTER_BASE_URL : undefined;
+    this.model = opts?.model ?? envModel ?? "voyageai/rerank-2.5-lite";
+    this.enabled = opts?.enabled ?? envEnabled;
+    this.baseUrl = opts?.baseUrl ?? envBase ?? "https://openrouter.ai/api/v1";
   }
-  private baseUrl: string;
 
   async rerank(query: string, candidates: RerankCandidate[], topN: number): Promise<RerankedDoc[]> {
     if (!this.enabled || candidates.length === 0) {

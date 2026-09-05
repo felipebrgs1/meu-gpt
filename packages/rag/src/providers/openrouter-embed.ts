@@ -5,12 +5,17 @@ import type { EmbeddingProvider } from "../types.js";
 export class OpenRouterEmbedding implements EmbeddingProvider {
   readonly model: string;
   readonly dimensions = 1024 as const;
+  private baseUrl: string;
+
   constructor(
     private apiKey: string,
-    model = process.env.EMBED_MODEL ?? "perplexity/pplx-embed-v1-0.6b",
-    private baseUrl = process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1",
+    model?: string,
+    baseUrl?: string,
   ) {
-    this.model = model;
+    const envModel = typeof process !== "undefined" ? process.env?.EMBED_MODEL : undefined;
+    const envBase = typeof process !== "undefined" ? process.env?.OPENROUTER_BASE_URL : undefined;
+    this.model = model ?? envModel ?? "perplexity/pplx-embed-v1-0.6b";
+    this.baseUrl = baseUrl ?? envBase ?? "https://openrouter.ai/api/v1";
   }
 
   async embedQuery(text: string): Promise<number[]> {
