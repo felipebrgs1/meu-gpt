@@ -1,7 +1,7 @@
 import type { Reranker, RerankCandidate, RerankedDoc } from "../types.js";
 
 // Voyage AI (MongoDB) via OpenRouter — NÃO Atlas/$rerank.
-// Default: voyageai/rerank-2.5 (32K, ~$0.05/M). Futuro: rerank-3 (quality) / rerank-3-lite (fast).
+// Modelo: nvidia/llama-nemotron-rerank-vl-1b-v2:free (via OpenRouter).
 // MVP: RERANK_ENABLED=false → passthrough ordenado por vectorScore.
 export class VoyageReranker implements Reranker {
   readonly model: string;
@@ -13,6 +13,7 @@ export class VoyageReranker implements Reranker {
     opts?: { model?: string; enabled?: boolean; baseUrl?: string },
   ) {
     const envModel = typeof process !== "undefined" ? process.env?.RERANK_MODEL : undefined;
+    // default legado: voyageai/rerank-2.5
     const envEnabled = typeof process !== "undefined" ? process.env?.RERANK_ENABLED === "true" : false;
     const envBase = typeof process !== "undefined" ? process.env?.OPENROUTER_BASE_URL : undefined;
     this.model = opts?.model ?? envModel ?? "voyageai/rerank-2.5-lite";

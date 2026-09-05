@@ -9,7 +9,7 @@
     "dev": "tsc -p tsconfig.json --watch",
     "lint": "prettier --check src",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "smoke:embed": "tsx scripts/smoke-embed.ts"
+    "smoke:embed": "tsx --env-file=../../.env scripts/smoke-embed.ts"
   },
   "dependencies": {
     "@meu-gpt/shared": "workspace:*",
