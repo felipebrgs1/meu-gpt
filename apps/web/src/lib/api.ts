@@ -62,6 +62,7 @@ export async function login(username: string, password: string): Promise<AuthInf
 }
 
 async function throwForAuthError(res: Response, fallback: string): Promise<never> {
+  if (res.status === 401) throw new Error("unauthorized");
   const j = (await res.json().catch(() => null)) as { error?: string } | null;
   if (j?.error) throw new Error(j.error);
   throw new Error(`${fallback} ${res.status}`);
@@ -88,7 +89,9 @@ export async function changeCredentials(ch: CredentialChanges): Promise<{ userna
     body: JSON.stringify(ch),
   });
   if (res.ok) {
-    const data = (await res.json().catch(() => ({}))) as { username?: string };
+    // A troca invalida as outras sessões; esta continua com o token novo.
+    const data = (await res.json().catch(() => ({}))) as { username?: string; token?: string };
+    if (data.token) localStorage.setItem("meu-gpt-token", data.token);
     return { username: data.username ?? ch.newUsername?.trim() ?? "" };
   }
   const j = (await res.json().catch(() => ({ error: res.statusText }))) as { error?: string };
@@ -111,6 +114,7 @@ export async function listConversations(): Promise<Conversation[]> {
 
 export async function getMessages(conversationId: string): Promise<UIMessage[]> {
   const res = await fetch(`${API}/api/v1/conversations/${conversationId}/messages`, { headers: authHeaders() });
+  if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) throw new Error(`messages ${res.status}`);
   const rows = (await res.json()) as {
     id: string;
@@ -142,6 +146,7 @@ export async function getMessages(conversationId: string): Promise<UIMessage[]> 
 
 export async function deleteConversation(id: string): Promise<void> {
   const res = await fetch(`${API}/api/v1/conversations/${id}`, { method: "DELETE", headers: authHeaders() });
+  if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) throw new Error(`delete ${res.status}`);
 }
 
@@ -151,6 +156,7 @@ export async function ingestDocument(title: string, text: string): Promise<{ doc
     headers: authHeaders(),
     body: JSON.stringify({ title, text }),
   });
+  if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) throw new Error(`ingest ${res.status}: ${await res.text()}`);
   return (await res.json()) as { documentId: string; chunkCount: number };
 }
@@ -164,6 +170,7 @@ export async function uploadDocument(file: File, title?: string): Promise<{ docu
     headers: { Authorization: `Bearer ${getToken()}` },
     body: form,
   });
+  if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) {
     const j = (await res.json().catch(() => ({ error: res.statusText }))) as { error?: string };
     throw new Error(j.error ?? `upload ${res.status}`);
@@ -173,12 +180,14 @@ export async function uploadDocument(file: File, title?: string): Promise<{ docu
 
 export async function listDocuments(): Promise<DocRecord[]> {
   const res = await fetch(`${API}/api/v1/documents`, { headers: authHeaders() });
+  if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) throw new Error(`documents ${res.status}`);
   return (await res.json()) as DocRecord[];
 }
 
 export async function deleteDocument(id: string): Promise<void> {
   const res = await fetch(`${API}/api/v1/documents/${id}`, { method: "DELETE", headers: authHeaders() });
+  if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) throw new Error(`delete doc ${res.status}`);
 }
 
@@ -209,7 +218,7 @@ export async function streamChat(
     body: JSON.stringify(body),
   });
   if (!res.ok || !res.body) {
-    h.onError(`chat ${res.status}`);
+    h.onError(res.status === 401 ? "unauthorized" : `chat ${res.status}`);
     return;
   }
   const reader = res.body.getReader();

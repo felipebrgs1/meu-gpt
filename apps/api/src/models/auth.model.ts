@@ -10,6 +10,7 @@ export interface AuthUpsert {
   passwordHash: string;
   passwordSalt: string;
   mustChange: number;
+  sessionVersion: number;
   updatedAt: string;
 }
 
@@ -29,6 +30,7 @@ export const authModel = {
           passwordHash: data.passwordHash,
           passwordSalt: data.passwordSalt,
           mustChange: data.mustChange,
+          sessionVersion: data.sessionVersion,
           updatedAt: data.updatedAt,
         })
         .where(eq(authState.id, SINGLE_AUTH_ID));

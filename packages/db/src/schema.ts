@@ -61,6 +61,10 @@ export const authState = sqliteTable("auth_state", {
   passwordHash: text("password_hash").notNull(), // SHA-256(salt:password) em hex
   passwordSalt: text("password_salt").notNull(), // 16 bytes em hex
   mustChange: integer("must_change").notNull().default(1), // 1 = troca pendente
+  // Versão da sessão: incrementada a cada troca de credencial. O token
+  // emitido incorpora a versão, então sessões antigas recebem 401 e o
+  // front força o re-login (trocar a senha desloga as outras sessões).
+  sessionVersion: integer("session_version").notNull().default(0),
   updatedAt: text("updated_at").notNull(),
 });
 

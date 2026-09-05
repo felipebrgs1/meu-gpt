@@ -16,7 +16,7 @@ export interface SlotOption {
 export const SLOTS: SlotOption[] = [
   { id: "fast", label: "Fast", modelName: "MiniMax-M3", hint: "Rápido e gratuito", icon: LightningIcon },
   { id: "cheap", label: "Cheap", modelName: "GLM-5.3-flash", hint: "Custo-benefício", icon: LeafIcon },
-  { id: "quality", label: "Quality", modelName: "GLM-5.3-flash", hint: "Alta precisão", icon: SparkleIcon },
+  { id: "quality", label: "Quality", modelName: "muse-spark-1.3-contributor", hint: "Alta precisão", icon: SparkleIcon },
 ];
 
 export interface QuickPrompt {
@@ -42,7 +42,7 @@ export const QUICK_PROMPTS: QuickPrompt[] = [
   {
     icon: TerminalIcon,
     category: "Arquitetura",
-    title: "StackIcon Cloudflare Workers + D1",
+    title: "Stack Cloudflare Workers + D1",
     prompt: "Explique a arquitetura deste projeto: HonoJS na edge, Drizzle ORM sobre D1 SQLite, R2 para texto e SSE para streaming em tempo real.",
   },
   {

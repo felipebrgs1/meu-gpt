@@ -93,6 +93,7 @@ export async function logout(): Promise<void> {
 
 export async function listConversations(): Promise<Conversation[]> {
   const res = await fetch(`${API}/api/v1/conversations`, { headers: await authHeaders() });
+  if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) throw new Error(`conversations ${res.status}`);
   return (await res.json()) as Conversation[];
 }
@@ -101,6 +102,7 @@ export async function getMessages(conversationId: string): Promise<UIMessage[]> 
   const res = await fetch(`${API}/api/v1/conversations/${conversationId}/messages`, {
     headers: await authHeaders(),
   });
+  if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) throw new Error(`messages ${res.status}`);
   const rows = (await res.json()) as {
     id: string;
@@ -135,6 +137,7 @@ export async function deleteConversation(id: string): Promise<void> {
     method: "DELETE",
     headers: await authHeaders(),
   });
+  if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) throw new Error(`delete ${res.status}`);
 }
 
@@ -147,6 +150,7 @@ export async function ingestDocument(
     headers: await authHeaders(),
     body: JSON.stringify({ title, text }),
   });
+  if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) throw new Error(`ingest ${res.status}: ${await res.text()}`);
   return (await res.json()) as { documentId: string; chunkCount: number };
 }
@@ -167,6 +171,7 @@ export async function uploadDocument(
     headers: { Authorization: `Bearer ${await getToken()}` },
     body: form,
   });
+  if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) {
     const j = (await res.json().catch(() => ({ error: res.statusText }))) as { error?: string };
     throw new Error(j.error ?? `upload ${res.status}`);
@@ -181,6 +186,7 @@ export async function uploadDocument(
 
 export async function listDocuments(): Promise<DocRecord[]> {
   const res = await fetch(`${API}/api/v1/documents`, { headers: await authHeaders() });
+  if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) throw new Error(`documents ${res.status}`);
   return (await res.json()) as DocRecord[];
 }
@@ -190,6 +196,7 @@ export async function deleteDocument(id: string): Promise<void> {
     method: "DELETE",
     headers: await authHeaders(),
   });
+  if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) throw new Error(`delete doc ${res.status}`);
 }
 
@@ -285,7 +292,7 @@ export async function streamChat(
           h.onError("falha de rede");
           finish();
         } else if (xhr.status >= 400 && !done) {
-          h.onError(`chat ${xhr.status}`);
+          h.onError(xhr.status === 401 ? "unauthorized" : `chat ${xhr.status}`);
           finish();
         } else if (!done) {
           // Stream closed without a done event: surface what we got.

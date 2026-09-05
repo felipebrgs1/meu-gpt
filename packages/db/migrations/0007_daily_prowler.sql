@@ -1,0 +1,1 @@
+ALTER TABLE `auth_state` ADD `session_version` integer DEFAULT 0 NOT NULL;

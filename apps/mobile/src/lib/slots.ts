@@ -14,7 +14,7 @@ export interface SlotOption {
 export const SLOTS: SlotOption[] = [
   { id: "fast", label: "Fast", modelName: "MiniMax-M3", hint: "Rápido e gratuito" },
   { id: "cheap", label: "Cheap", modelName: "GLM-5.3-flash", hint: "Custo-benefício" },
-  { id: "quality", label: "Quality", modelName: "GLM-5.3-flash", hint: "Alta precisão" },
+  { id: "quality", label: "Quality", modelName: "muse-spark-1.3-contributor", hint: "Alta precisão" },
 ];
 
 export interface QuickPrompt {

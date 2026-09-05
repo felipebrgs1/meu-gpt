@@ -45,11 +45,18 @@ export function ChatScreen() {
   const open = (k: keyof typeof sheets) => setSheets((s) => ({ ...s, [k]: true }));
   const close = (k: keyof typeof sheets) => setSheets((s) => ({ ...s, [k]: false }));
 
+  // Token invalidado (ex: senha trocada em outra sessão): limpa e volta ao login.
+  async function forceLogout() {
+    await logout().catch(() => {});
+    newChat();
+    setAuthed(false);
+  }
+
   async function refreshConvs() {
     try {
       setConvs(await listConversations());
-    } catch {
-      /* expired token etc. */
+    } catch (e) {
+      if (e instanceof Error && e.message.includes("unauthorized")) void forceLogout();
     }
   }
 
@@ -78,7 +85,11 @@ export function ChatScreen() {
     close("convs");
     try {
       setLog(await getMessages(id));
-    } catch {
+    } catch (e) {
+      if (e instanceof Error && e.message.includes("unauthorized")) {
+        void forceLogout();
+        return;
+      }
       const cs = await listConversations().catch(() => null);
       if (cs && !cs.some((c) => c.id === id)) {
         newChat();
@@ -112,6 +123,12 @@ export function ChatScreen() {
     setInput("");
     let acc = "";
     const fail = (msg: string) => {
+      // Chat com token invalidado: volta ao login em vez de mostrar "erro:".
+      if (msg.includes("unauthorized")) {
+        setBusy(false);
+        void forceLogout();
+        return;
+      }
       setLog((l) => {
         const c = [...l];
         c[c.length - 1] = { ...c[c.length - 1], id: `${Date.now()}-err`, content: acc || `erro: ${msg}` };

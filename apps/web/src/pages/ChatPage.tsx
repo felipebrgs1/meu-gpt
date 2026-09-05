@@ -58,8 +58,15 @@ export function ChatPage() {
       setConvs(await listConversations());
     } catch (e) {
       if (e instanceof Error && e.message.includes("password_change_required")) setMustChange(true);
-      /* token expirado etc. */
+      // Token invalidado (ex: senha trocada em outra sessão): volta ao login.
+      if (e instanceof Error && e.message.includes("unauthorized")) forceLogout();
     }
+  }
+
+  function forceLogout() {
+    logout();
+    setMustChange(false);
+    setAuthed(false);
   }
 
   // Sessão já logada (token no storage) ainda precisa validar a troca obrigatória.
@@ -86,8 +93,11 @@ export function ChatPage() {
         const msg = e instanceof Error ? e.message : "";
         if (msg.includes("password_change_required") || msg.includes("status 404")) {
           setMustChange(true);
+        } else if (msg.includes("unauthorized")) {
+          // Token invalidado (senha trocada em outra sessão): volta ao login.
+          forceLogout();
         } else {
-          // Token inválido etc: trata como deslogado no próximo erro de lista.
+          // Erro transitório: tenta listar mesmo assim.
           void refreshConvs();
         }
       })
@@ -106,7 +116,12 @@ export function ChatPage() {
     setLoadingConv(true);
     try {
       setLog(await getMessages(id));
-    } catch {
+    } catch (e) {
+      // Token invalidado no meio da navegação: volta ao login.
+      if (e instanceof Error && e.message.includes("unauthorized")) {
+        forceLogout();
+        return;
+      }
       // Id fantasma (conversa apagada em outro lugar): volta pro / em vez de
       // prender a URL. Erro transitório mantém o estado e só limpa o log.
       const cs = await listConversations().catch(() => null);
@@ -158,6 +173,12 @@ export function ChatPage() {
     setInput("");
     let acc = "";
     const fail = (msg: string) => {
+      // Chat com token invalidado (senha trocada em outra sessão): login.
+      if (msg.includes("unauthorized")) {
+        setBusy(false);
+        forceLogout();
+        return;
+      }
       setLog((l) => {
         const c = [...l];
         c[c.length - 1] = { ...c[c.length - 1], id: crypto.randomUUID(), content: acc || `erro: ${msg}` };
@@ -252,9 +273,7 @@ export function ChatPage() {
           onOpenIngest={() => setIngestOpen(true)}
           onOpenAccount={() => setAccountOpen(true)}
           onLogout={() => {
-            logout();
-            setMustChange(false);
-            setAuthed(false);
+            forceLogout();
           }}
         />
 

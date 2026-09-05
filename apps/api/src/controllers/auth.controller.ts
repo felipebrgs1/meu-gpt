@@ -1,11 +1,13 @@
 import type { Context } from "hono";
 import type { Env } from "../env.js";
 import { createDb } from "@meu-gpt/db";
+import { authModel } from "../models/auth.model.js";
 import { changePasswordRequestSchema, loginRequestSchema } from "@meu-gpt/shared";
 import {
   changeCredentials,
   getEffectiveUsername,
   needsPasswordChange,
+  sessionToken,
   verifyCredentials,
 } from "../services/auth.service.js";
 import {
@@ -43,8 +45,9 @@ export async function login(c: C) {
     return c.json({ error: "bad credentials" }, 403);
   }
   await recordSuccessfulLogin(db, ip);
+  const row = await authModel.get(db).catch(() => null);
   return c.json({
-    token: c.env.SESSION_TOKEN,
+    token: sessionToken(c.env.SESSION_TOKEN, row),
     mustChangePassword: await needsPasswordChange(db),
     username: await getEffectiveUsername(db),
   });
@@ -71,7 +74,13 @@ export async function changeUserPassword(c: C) {
     const code = out.reason === "senha atual incorreta" ? 403 : out.reason.includes("indisponível") ? 500 : 400;
     return c.json({ error: out.reason }, code as 400 | 403 | 500);
   }
-  return c.json({ ok: true, username: out.username });
+  // A sessão que trocou continua válida: devolve o token novo (as demais
+  // sessões recebem 401 a partir daqui e o front força o re-login).
+  return c.json({
+    ok: true,
+    username: out.username,
+    token: sessionToken(c.env.SESSION_TOKEN, { sessionVersion: out.sessionVersion }),
+  });
 }
 
 export async function health(c: C) {

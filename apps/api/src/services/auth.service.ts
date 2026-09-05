@@ -120,7 +120,7 @@ export async function changeCredentials(
   db: Db,
   currentPassword: unknown,
   changes: CredentialChanges,
-): Promise<{ ok: true; username: string } | { ok: false; reason: string }> {
+): Promise<{ ok: true; username: string; sessionVersion: number } | { ok: false; reason: string }> {
   if (typeof currentPassword !== "string" || !currentPassword) return { ok: false, reason: "senha atual obrigatória" };
   const wantPassword = changes.newPassword !== undefined;
   const wantUsername = changes.newUsername !== undefined;
@@ -162,19 +162,23 @@ export async function changeCredentials(
   } else if (!row) {
     finalHash = await hashPassword(currentPassword, passwordSalt);
   }
+  // Toda troca (senha e/ou usuário) invalida as outras sessões: a versão
+  // sobe e os tokens antigos deixam de bater no middleware (401).
+  const sessionVersion = (row?.sessionVersion ?? 0) + 1;
   try {
     await authModel.upsert(db, {
       username,
       passwordHash: finalHash,
       passwordSalt,
       mustChange,
+      sessionVersion,
       updatedAt: new Date().toISOString(),
     });
   } catch (err) {
     console.error("[auth] changeCredentials upsert failed:", err);
     return { ok: false, reason: "banco indisponível, tente de novo" };
   }
-  return { ok: true, username };
+  return { ok: true, username, sessionVersion };
 }
 
 // Compat: troca só de senha (endpoint antigo continua valendo).
@@ -194,4 +198,15 @@ export function __testOnly() {
 export function isValidToken(token: string, expected: string | undefined): boolean {
   if (!token || !expected) return false;
   return token === expected;
+}
+
+// Token de sessão versionado: incorpora session_version do D1, então toda
+// troca de credencial invalida os tokens antigos (401 → front força login).
+// Versão 0 = formato legado (o próprio SESSION_TOKEN), para não deslogar
+// ninguém no deploy desta mudança; a partir da 1ª troca o formato passa a
+// ser `${secret}.${version}`.
+export function sessionToken(secret: string | undefined, row: { sessionVersion?: number | null } | null): string {
+  const v = row?.sessionVersion ?? 0;
+  if (!secret || v <= 0) return secret ?? "";
+  return `${secret}.${v}`;
 }
