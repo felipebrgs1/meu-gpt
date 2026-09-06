@@ -6,10 +6,8 @@ import {
   MagnifyingGlassIcon,
   PencilSimpleIcon,
   SignOutIcon,
-  SidebarSimpleIcon,
   TrashIcon,
   UserIcon,
-  XIcon,
 } from "@phosphor-icons/react";
 import type { Conversation } from "@meu-gpt/shared";
 import { Button } from "@/components/ui/button";
@@ -115,7 +113,7 @@ function ConvRow({
           }
         />
         <DropdownMenuContent align="end">
-          <DropdownMenuItem variant="destructive" onSelect={onRemove}>
+          <DropdownMenuItem variant="destructive" onClick={onRemove}>
             <TrashIcon className="size-3.5" /> Excluir
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -138,7 +136,7 @@ export function ChatSidebar({
   onOpenAccount,
   onLogout,
 }: Props) {
-  const { state, toggleSidebar } = useSidebar();
+  const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const [query, setQuery] = useState("");
 
@@ -153,39 +151,6 @@ export function ChatSidebar({
   return (
     <Sidebar collapsible="icon" className="border-r border-border/50 h-full overflow-hidden">
       <SidebarHeader className="gap-1.5 p-2.5">
-        {/* Topo: fechar sidebar + novo chat (como o ChatGPT) */}
-        <div className="flex items-center justify-between gap-1">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={toggleSidebar}
-            className="size-8 shrink-0 text-muted-foreground hover:text-foreground"
-            title={collapsed ? "Expandir barra lateral" : "Fechar barra lateral"}
-          >
-            {collapsed ? <SidebarSimpleIcon className="size-4" /> : <XIcon className="size-4" />}
-            <span className="sr-only">Alternar barra lateral</span>
-          </Button>
-          {!collapsed && (
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={onNew}
-                    className="size-8 shrink-0 text-muted-foreground hover:text-foreground"
-                    title="Nova conversa"
-                  />
-                }
-              >
-                <PencilSimpleIcon className="size-4" />
-                <span className="sr-only">Nova conversa</span>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Nova conversa</TooltipContent>
-            </Tooltip>
-          )}
-        </div>
-
         {/* Rail colapsado: só ícones (novo chat / buscar ao expandir) */}
         {collapsed && (
           <Tooltip>
@@ -204,6 +169,27 @@ export function ChatSidebar({
               <span className="sr-only">Nova conversa</span>
             </TooltipTrigger>
             <TooltipContent side="right">Nova conversa</TooltipContent>
+          </Tooltip>
+        )}
+
+        {/* Botão "novo chat" expandido */}
+        {!collapsed && (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={onNew}
+                  className="size-8 shrink-0 text-muted-foreground hover:text-foreground"
+                  title="Nova conversa"
+                />
+              }
+            >
+              <PencilSimpleIcon className="size-4" />
+              <span className="sr-only">Nova conversa</span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Nova conversa</TooltipContent>
           </Tooltip>
         )}
 

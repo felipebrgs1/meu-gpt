@@ -1,6 +1,9 @@
 import type { ChatUsage, Citation } from "@meu-gpt/shared";
+import type { UpstreamToolCall } from "../services/openrouter.service.js";
 
 // VIEW de streaming — renderiza a resposta do chat como SSE (token/done/error)
+
+export type SSESend = (event: string, data: unknown) => void;
 
 export interface ChatSSEMeta {
   conversationId: string;
@@ -24,14 +27,22 @@ export interface PumpResult {
   generationId: string | null;
   firstTokenMs: number | null;
   endMs: number;
+  // Razão de término do round (ex. "stop" | "tool_calls" | "length").
+  finishReason: string | null;
+  // Chamadas de tool pedidas pelo modelo (acumuladas dos deltas).
+  toolCalls: UpstreamToolCall[];
 }
 
 export interface ChatSSEDeps {
   meta: ChatSSEMeta;
+  // primeiro upstream (é re-chamado a cada rodada de tool pelo loop)
+  initialUpstream: Response;
   // salva a mensagem assistant no D1 antes do evento done
   persistAssistant: (content: string, usage: ChatUsage) => Promise<void>;
-  // consome o stream OpenAI-compat do OpenRouter e devolve tokens + usage
-  readTokens: (onToken: (t: string) => void) => Promise<PumpResult>;
+  // consome um stream OpenAI-compat do OpenRouter e devolve tokens + usage
+  readTokens: (upstream: Response, onToken: (t: string) => void) => Promise<PumpResult>;
+  // executada quando o modelo pede tools; devolve o próximo upstream (ou null p/ parar)
+  onToolCalls?: (calls: UpstreamToolCall[], send: SSESend) => Promise<Response | null>;
   // busca o custo real pós-stream (best-effort, null se indisponível)
   fetchCost?: (generationId: string) => Promise<number | null>;
 }
@@ -57,10 +68,22 @@ export function sseChatResponse(deps: ChatSSEDeps): Response {
         controller.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
       let fullText = "";
       try {
-        const pump = await readTokens((token) => {
-          fullText += token;
-          send("token", { token });
-        });
+        // Loop de tool calling: enquanto o modelo pedir tools, executa e re-abre.
+        let pump: PumpResult | null = null;
+        let upstream: Response | null = deps.initialUpstream;
+        while (upstream) {
+          pump = await readTokens(upstream, (token) => {
+            fullText += token;
+            send("token", { token });
+          });
+          const wantsTools =
+            pump.finishReason === "tool_calls" &&
+            pump.toolCalls.length > 0 &&
+            Boolean(deps.onToolCalls);
+          if (!wantsTools) break;
+          upstream = await deps.onToolCalls!(pump.toolCalls, send);
+        }
+        if (!pump) throw new Error("stream vazio");
 
         const tokensIn = numOrNull(pump.usage?.prompt_tokens);
         const tokensOut = numOrNull(pump.usage?.completion_tokens);
@@ -127,6 +150,9 @@ export async function pumpOpenRouterTokens(
   let usage: UpstreamUsage | null = null;
   let generationId: string | null = null;
   let firstTokenMs: number | null = null;
+  let finishReason: string | null = null;
+  // Tool calls chegam fragmentadas por índice no delta; acumula e consolida.
+  const toolFragments = new Map<number, UpstreamToolCall>();
   for (;;) {
     const { done, value } = await reader.read();
     if (done) break;
@@ -142,15 +168,43 @@ export async function pumpOpenRouterTokens(
         const json = JSON.parse(payload);
         if (typeof json.id === "string" && !generationId) generationId = json.id;
         if (json.usage && typeof json.usage === "object") usage = json.usage as UpstreamUsage;
-        const token: string = json.choices?.[0]?.delta?.content ?? "";
+        const choice = json.choices?.[0];
+        const token: string = choice?.delta?.content ?? "";
         if (token) {
           if (firstTokenMs === null) firstTokenMs = Date.now();
           onToken(token);
+        }
+        const fr: unknown = choice?.finish_reason;
+        if (typeof fr === "string" && fr) finishReason = fr;
+        if (Array.isArray(choice?.delta?.tool_calls)) {
+          for (const frag of choice.delta.tool_calls as Array<{
+            index?: number;
+            id?: string;
+            function?: { name?: string; arguments?: string };
+          }>) {
+            const idx = typeof frag.index === "number" ? frag.index : toolFragments.size;
+            const acc = toolFragments.get(idx) ?? {
+              id: "",
+              type: "function" as const,
+              function: { name: "", arguments: "" },
+            };
+            if (frag.id) acc.id = frag.id;
+            if (frag.function?.name) acc.function.name += frag.function.name;
+            if (frag.function?.arguments) acc.function.arguments += frag.function.arguments;
+            toolFragments.set(idx, acc);
+          }
         }
       } catch {
         /* keep-alive */
       }
     }
   }
-  return { usage, generationId, firstTokenMs, endMs: Date.now() };
+  return {
+    usage,
+    generationId,
+    firstTokenMs,
+    endMs: Date.now(),
+    finishReason,
+    toolCalls: [...toolFragments.values()].filter((c) => c.id && c.function.name),
+  };
 }

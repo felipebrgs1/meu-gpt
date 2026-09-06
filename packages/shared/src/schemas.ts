@@ -19,6 +19,8 @@ export const chatRequestSchema = z.object({
   // ephemeral: testa sem deixar rastro (não persiste conversa nem mensagens no D1).
   // Agentes DEVEM usar ephemeral:true — ou apagar a conversa no finally (ver scripts/e2e-chat-test.mjs).
   ephemeral: z.boolean().optional().default(false),
+  // webSearch: busca na web (DuckDuckGo Lite) e/ou fetch de URL para fatos atualizados (custo zero).
+  webSearch: z.boolean().optional(),
 });
 
 export type ChatRequest = z.infer<typeof chatRequestSchema>;
@@ -102,3 +104,43 @@ export const citationSchema = z.object({
 });
 
 export type Citation = z.infer<typeof citationSchema>;
+
+// Tools de web (busca DuckDuckGo Lite + fetch de página — sem key, sem custo)
+export const webSearchRequestSchema = z.object({
+  query: z.string().trim().min(1).max(500),
+  maxResults: z.number().int().min(1).max(20).optional(),
+});
+
+export type WebSearchRequest = z.infer<typeof webSearchRequestSchema>;
+
+export const webFetchRequestSchema = z.object({
+  url: z.string().trim().url(),
+});
+
+export type WebFetchRequest = z.infer<typeof webFetchRequestSchema>;
+
+export const webSearchResultSchema = z.object({
+  title: z.string(),
+  url: z.string(),
+  snippet: z.string(),
+});
+
+export const webSearchResponseSchema = z.object({
+  query: z.string(),
+  results: z.array(webSearchResultSchema),
+  tookMs: z.number(),
+});
+
+export type WebSearchResult = z.infer<typeof webSearchResultSchema>;
+export type WebSearchResponse = z.infer<typeof webSearchResponseSchema>;
+
+export const webFetchResponseSchema = z.object({
+  url: z.string(),
+  finalUrl: z.string(),
+  title: z.string().nullable(),
+  content: z.string(),
+  truncated: z.boolean(),
+  tookMs: z.number(),
+});
+
+export type WebFetchResponse = z.infer<typeof webFetchResponseSchema>;

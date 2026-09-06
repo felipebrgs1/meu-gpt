@@ -4,6 +4,7 @@ import { loginLimiter, writeLimiter } from "../middleware/rate-limit.js";
 import { changeUserPassword, health, login, status } from "../controllers/auth.controller.js";
 import * as conversations from "../controllers/conversations.controller.js";
 import * as documents from "../controllers/documents.controller.js";
+import * as web from "../controllers/web.controller.js";
 import { chat } from "../controllers/chat.controller.js";
 
 // ROUTES — mapeia HTTP → controller (sem lógica de negócio aqui)
@@ -27,5 +28,8 @@ routes.post("/api/v1/documents/ingest-text", writeLimiter, documents.ingestPaste
 routes.get("/api/v1/documents", documents.list);
 routes.get("/api/v1/documents/:id/raw", documents.raw);
 routes.delete("/api/v1/documents/:id", documents.remove);
+
+routes.post("/api/v1/web/search", writeLimiter, web.search);
+routes.post("/api/v1/web/fetch", writeLimiter, web.fetchUrl);
 
 routes.post("/api/v1/chat", writeLimiter, chat);

@@ -2,10 +2,29 @@ import type { Env } from "../env.js";
 
 // SERVICE — cliente do OpenRouter (única dependência externa de LLM/embed/rerank)
 
+// Tool call no formato OpenAI (acumulado dos deltas do stream)
+export interface UpstreamToolCall {
+  id: string;
+  type: "function";
+  function: { name: string; arguments: string };
+}
+
+// Mensagens OpenAI-compat: inclui as variantes de tool calling
+export type ChatApiMessage =
+  | { role: "system" | "user" | "assistant"; content: string }
+  | { role: "assistant"; content: null; tool_calls: UpstreamToolCall[] }
+  | { role: "tool"; tool_call_id: string; content: string };
+
+export interface OpenAITool {
+  type: "function";
+  function: { name: string; description: string; parameters: Record<string, unknown> };
+}
+
 export async function openRouterChatStream(opts: {
   env: Env;
   model: string;
-  messages: { role: string; content: string }[];
+  messages: ChatApiMessage[];
+  tools?: OpenAITool[];
 }): Promise<Response> {
   const base = opts.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1";
   const res = await fetch(`${base}/chat/completions`, {
@@ -22,6 +41,7 @@ export async function openRouterChatStream(opts: {
       stream: true,
       // Sem isso o OpenRouter não anexa `usage` ao chunk final do stream.
       stream_options: { include_usage: true },
+      ...(opts.tools?.length ? { tools: opts.tools, tool_choice: "auto" } : {}),
     }),
   });
   if (!res.ok || !res.body) throw new Error(`openrouter ${res.status}: ${await res.text()}`);

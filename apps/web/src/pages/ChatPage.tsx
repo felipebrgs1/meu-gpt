@@ -209,6 +209,21 @@ export function ChatPage() {
               return c;
             });
           },
+          onTool: (info) => {
+            // Feedback da busca na web: mostra o status na bolha em streaming
+            // até o primeiro token chegar (aí o texto da resposta assume).
+            const label =
+              info.label ??
+              (info.name === "fetch_page" ? "🔎 Lendo página…" : "🔎 Pesquisando na web…");
+            setLog((l) => {
+              const c = [...l];
+              const last = c[c.length - 1];
+              if (last?.role === "assistant" && last.id === "streaming") {
+                c[c.length - 1] = { ...last, content: label };
+              }
+              return c;
+            });
+          },
           onDone: (full, citations, convId, model, usage) => {
             setLog((l) => {
               const c = [...l];

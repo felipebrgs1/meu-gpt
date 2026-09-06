@@ -1,4 +1,10 @@
-import type { ChatUsage, Citation, Conversation } from "@meu-gpt/shared";
+import type {
+  ChatUsage,
+  Citation,
+  Conversation,
+  WebFetchResponse,
+  WebSearchResponse,
+} from "@meu-gpt/shared";
 
 export interface DocRecord {
   id: string;
@@ -228,6 +234,8 @@ export interface StreamHandlers {
     usage: ChatUsage | null,
   ) => void;
   onError: (msg: string) => void;
+  // evento tool/tool_status: feedback de busca na web enquanto streama
+  onTool?: (info: { name?: string; label?: string; args?: unknown }) => void;
 }
 
 // POST /api/v1/chat com SSE (eventos token/done/error, citações só no done)
@@ -238,6 +246,7 @@ export async function streamChat(
     messages: { role: string; content: string }[];
     documentIds?: string[];
     conversationId?: string;
+    webSearch?: boolean;
   },
   h: StreamHandlers,
 ) {
@@ -279,10 +288,32 @@ export async function streamChat(
           );
         } else if (event === "error") {
           h.onError(json.message);
+        } else if (event === "tool" || event === "tool_status") {
+          h.onTool?.(json as { name?: string; label?: string; args?: unknown });
         }
       } catch {
         /* noop */
       }
     }
   }
+}
+
+export async function searchWeb(query: string, maxResults = 5): Promise<WebSearchResponse> {
+  const res = await fetch(`${API}/api/v1/web/search`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ query, maxResults }),
+  });
+  if (!res.ok) throw new Error(`search ${res.status}`);
+  return (await res.json()) as WebSearchResponse;
+}
+
+export async function fetchUrl(url: string): Promise<WebFetchResponse> {
+  const res = await fetch(`${API}/api/v1/web/fetch`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ url }),
+  });
+  if (!res.ok) throw new Error(`fetch ${res.status}`);
+  return (await res.json()) as WebFetchResponse;
 }
